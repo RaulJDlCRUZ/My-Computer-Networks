@@ -8,6 +8,7 @@ public class LFTServer {
     private static int maximumClients;
 
     public static void main(String[] args) throws IOException {
+        LFTServer _miServidor = new LFTServer();
         try {
             switch (args.length) {
                 case 3:
@@ -39,11 +40,14 @@ public class LFTServer {
                     "Se han recogido los argumentos correctamente. <modoSSL=" + modoSSL + "> <puerto=" + puerto
                             + "> <carpeta_servidor=" + carpetaServidor + "> <max_clientes=" + maximumClients);
             // * log los argumentos
-            LFTServer _miServidor = new LFTServer();
-            // _miServidor.start(puerto);
+            _miServidor.start(modoSSL, puerto, carpetaServidor, maximumClients);
         } catch (Exception e) {
             System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
             // ! ERROR + log <---- e.printStackTrace();
         }
+    }
+
+    public void start(boolean modoSSL, int puerto, String carpetaServidor, int maximumClients) {
+
     }
 }
