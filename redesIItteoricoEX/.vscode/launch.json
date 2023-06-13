@@ -10,6 +10,9 @@
             "request": "launch",
             "mainClass": "${file}"
         },
+                /*
+        ! CONFIGURACIÓN PARA EL PROCESO CLIENTE
+        */
         {
             "type": "java",
             "name": "LFTClient",
@@ -19,13 +22,16 @@
             "args": ["127.0.0.1", "7133", "/home/raul/Escritorio/"]
             //"args": ["modoSSL", "127.0.0.1", "7133", "/home/raul/Escritorio/"]
         },
+        /*
+        ! CONFIGURACIÓN PARA EL PROCESO SERVIDOR
+        */
         {
             "type": "java",
             "name": "LFTServer",
             "request": "launch",
             "mainClass": "LFTServer",
             "projectName": "redesIItteoricoEX_d9664767",
-            "args": ["127.0.0.1", "/home/raul/Escritorio/", "1"]
+            "args": ["9834", "/home/raul/Escritorio/", "a"]
             //"args": ["modoSSL", "8641", "/home/raul/Escritorio/", "1"]
         }
     ]

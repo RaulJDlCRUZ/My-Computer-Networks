@@ -35,14 +35,15 @@ public class LFTServer {
                     System.exit(2);
                     break;
             }
-            System.out.println("Se han recogido los argumentos correctamente. <modoSSL=" + modoSSL + "> <puerto=" + puerto
+            System.out.println(
+                    "Se han recogido los argumentos correctamente. <modoSSL=" + modoSSL + "> <puerto=" + puerto
                             + "> <carpeta_servidor=" + carpetaServidor + "> <max_clientes=" + maximumClients);
             // * log los argumentos
             LFTServer _miServidor = new LFTServer();
             // _miServidor.start(puerto);
         } catch (Exception e) {
-            System.err.println(e.getMessage());
-            //! ERROR + log <---- e.printStackTrace();
+            System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
+            // ! ERROR + log <---- e.printStackTrace();
         }
     }
 }

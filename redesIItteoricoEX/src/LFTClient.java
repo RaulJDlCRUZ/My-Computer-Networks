@@ -41,7 +41,8 @@ public class LFTClient {
             LFTClient _miCliente = new LFTClient();
             // _miCliente.start(puerto);
         } catch (Exception e) {
-
+            System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
+            // ! ERROR + log <---- e.printStackTrace();
         }
     }
 }
