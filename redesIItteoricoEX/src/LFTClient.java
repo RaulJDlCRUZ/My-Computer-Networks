@@ -37,7 +37,7 @@ public class LFTClient {
 
         }
         // * log los argumentos
-        LFTServer _miServidor = new LFTServer();
-        // _miServidor.start(puerto);
+        LFTClient _miCliente = new LFTClient();
+        // _miCliente.start(puerto);
     }
 }
