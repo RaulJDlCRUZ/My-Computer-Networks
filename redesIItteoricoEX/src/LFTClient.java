@@ -1,20 +1,27 @@
 import java.io.FileInputStream;
-// import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Scanner;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Scanner;
 
-import javax.net.ssl.*;
-
-import java.net.Socket;
-import java.net.UnknownHostException;
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
 
@@ -79,6 +86,7 @@ public class LFTClient {
         if (modoSSL) {
 
             /* Modo SSL Activado */
+            // TODO log para cada paso en ssl
             // TODO Probar que funcione el modo SSL
             try {
                 // 1. Acceso al almacén de claves
