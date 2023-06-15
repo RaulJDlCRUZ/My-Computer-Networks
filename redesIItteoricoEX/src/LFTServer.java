@@ -1,5 +1,7 @@
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyManagementException;
@@ -8,6 +10,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -137,19 +140,38 @@ public class LFTServer {
                 // ! log: la key no se puede recuperar
             }
         } else {
-            /* Servidor no funcionando a través de SSL */
+            /* Servidor funcionando sin SSL */
             try {
-                ServerSocket serversk = new ServerSocket(puerto);
-                // En este punto el servidor (non_ssl) se ha creado y espera al cliente
-                System.out.println("Iniciando servidor...");
+				// Socket de servidor para esperar peticiones de la red
+				ServerSocket serverSocket = new ServerSocket(puerto);
+				System.out.println("Servidor> Servidor iniciado");
+				System.out.println("Servidor> En espera de cliente...");
+				// Socket de cliente
 
-                // admitimos tantas peticiones como clientes máximos
-                while (actualClients <= maximumClients) {
-                    clientSocket = serversk.accept();
-                    actualClients++;
+				// en espera de conexion, si existe la acepta
+				clientSocket = serverSocket.accept();
+                actualClients++;
+				// Para leer lo que envie el cliente
+				InputStream input = clientSocket.getInputStream();
+				// para imprimir datos de salida
+				PrintStream output = new PrintStream(clientSocket.getOutputStream());
+
+				byte[] buffer = new byte[__MAX_BUFFER];
+				while (actualClients <= maximumClients) {
+					// se lee peticion del cliente
+					input.read(buffer, 0, buffer.length);
+					String request = new String(buffer);
+					System.out.println("Cliente> peticion [" + request + "]");
+					//! String[] parts = request.split("#");
+
+                    String[] parts = request.split(" ", 2);
+					String part1 = parts[0];
+					String part2 = parts[1];
+
+					//? System.out.println("request: "+request+"]\npart1: "+parts[0]+"]\npart2: "+parts[1]+"]");
+                    /*Desde aquí vamos a comprobar si el cliente desea finalizar su comunicación, para poder cerrar su socket de cliente */
                     sirve(clientSocket, false);
                 }
-                serversk.close();
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
             }
@@ -160,9 +182,10 @@ public class LFTServer {
         new Thread() {
             public void run() {
                 if (sslactivated) {
-                    System.out.println("WIP");
+                    // TODO implementar y probar
+                    System.out.println("WIP i");
                 } else {
-                    System.out.println("WIP");
+                    System.out.println("WIP ii");
                 }
             }
         }.start();

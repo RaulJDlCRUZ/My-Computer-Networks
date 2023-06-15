@@ -1,5 +1,7 @@
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -159,7 +161,7 @@ public class LFTClient {
                 System.out.println("Conexión establecida a través de TCP sin protocolo TLS.");
                 // * log de establecimiento conexión non-ssl
                 HandlerSSLClient(clienteNoSSL, carpetaCliente);
-                clienteNoSSL.close();
+                // clienteNoSSL.close();
             } catch (UnknownHostException uhe) {
                 System.err.println(uhe.getMessage());
                 // ! log: la dirección del host es desconocida o inexistente +
@@ -168,7 +170,6 @@ public class LFTClient {
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
             }
-
         }
     }
 
@@ -179,36 +180,36 @@ public class LFTClient {
             @Override
             public void run() {
                 boolean SALIR_SSL = false;
+                Scanner sn = new Scanner(System.in);
                 try {
                     while (!SALIR_SSL) {
                         menu();
-                        // Lectura por teclado de opción del cliente
-                        Scanner sci = new Scanner(System.in);
-                        // Leo la línea introducida
-                        String linea_teclado = sci.nextLine();
-                        // Cada palabra es un parámetro para el servidor (en un array)
-                        String[] paramsclissl = linea_teclado.split(" ");
-                        PrintWriter salidasocket = new PrintWriter(sk.getOutputStream());
+                        String linea_teclado = sn.nextLine();
+                        String[] paramsclissl = linea_teclado.split(" ", 2);
+
+                        InputStream input = sk.getInputStream();
+                        OutputStream output = sk.getOutputStream();
                         switch (paramsclissl[0]) {
                             case "LIST":
                                 // * log: se ha selecionado LIST
+                                paramsclissl[0] += " ";
                                 // Enviamos por el socket SSL el LIST al servidor
-                                salidasocket.println(paramsclissl[0]);
-                                salidasocket.flush(); // no dejamos ningún byte restante
+                                output.write(paramsclissl[0].getBytes());
+                                output.flush(); // no dejamos ningún byte restante
                                 // Esperamos su respuesta
-                                Scanner entradassl = new Scanner(sk.getInputStream());
-                                String totalprocesado = entradassl.nextLine();
+                                String totalprocesado = new String(input.readAllBytes());
+
                                 /*
                                  * Se desea fragmentar la línea en diferentes tokens = archivos, para mostrarlos
                                  * por pantalla
                                  */
+
                                 String lineas[] = totalprocesado.split("\n");
                                 String archivos[] = lineas[0].split(" ");
                                 System.out.print("Lista de archivos en el servidor: ");
                                 for (int i = 0; i < archivos.length; i++) {
                                     System.out.println((i + 1) + ". " + archivos[i]);
                                 }
-                                entradassl.close();
                                 // * log: LIST finalizó correctamente
                                 break;
                             case "GET":
@@ -216,9 +217,11 @@ public class LFTClient {
                             case "PUT":
                                 break;
                             case "SALIR":
+                                System.out.println("Saliendo y cerrando socket...");
                                 // * log: Saliendo...
                                 SALIR_SSL = true;
-                                sci.close();
+                                input.close();
+                                sk.close();
                                 break;
                         }
                     }
