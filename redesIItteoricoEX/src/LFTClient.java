@@ -35,8 +35,6 @@ public class LFTClient {
     private static int puerto;
     private static String carpetaCliente;
 
-    private SSLSocket clienteSSL;
-
     public static void main(String[] args) throws IOException {
         LFTClient _miCliente = new LFTClient();
         try {
@@ -111,7 +109,7 @@ public class LFTClient {
                     SSLContext sc = SSLContext.getInstance("SSL");
                     sc.init(keyManagers, trustManagers, null);
                     SSLSocketFactory ssf = sc.getSocketFactory();
-                    clienteSSL = (SSLSocket) ssf.createSocket(ip_host, puerto);
+                    SSLSocket clienteSSL = (SSLSocket) ssf.createSocket(ip_host, puerto);
 
                     // 5. Imprime info sobre el certificado del servidor
                     clienteSSL.addHandshakeCompletedListener(new HandshakeCompletedListener() {
@@ -132,7 +130,7 @@ public class LFTClient {
                     // 6. Handshake por parte del cliente
                     clienteSSL.startHandshake();
                     System.out.println("El cliente ha establecido la conexión a través de Secure Sockets Layer (SSL).");
-                    HandlerSSLClient(carpetaCliente);
+                    HandlerSSLClient(clienteSSL, carpetaCliente);
                     // * log de finalización del acuerdo cliente-servidor
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
@@ -160,7 +158,7 @@ public class LFTClient {
                 Socket clienteNoSSL = new Socket(ip_host, puerto);
                 System.out.println("Conexión establecida a través de TCP sin protocolo TLS.");
                 // * log de establecimiento conexión non-ssl
-                // !! IR AL MENU
+                HandlerSSLClient(clienteNoSSL, carpetaCliente);
                 clienteNoSSL.close();
             } catch (UnknownHostException uhe) {
                 System.err.println(uhe.getMessage());
@@ -174,7 +172,7 @@ public class LFTClient {
         }
     }
 
-    public void HandlerSSLClient(String carpeta_cliente) {
+    public void HandlerSSLClient(Socket sk, String carpeta_cliente) {
         System.out.println("Cliente de tipo SSL arrancado!");
         // * log: cliente SSL arrancado
         new Thread() {
@@ -190,7 +188,7 @@ public class LFTClient {
                         String linea_teclado = sci.nextLine();
                         // Cada palabra es un parámetro para el servidor (en un array)
                         String[] paramsclissl = linea_teclado.split(" ");
-                        PrintWriter salidasocket = new PrintWriter(clienteSSL.getOutputStream());
+                        PrintWriter salidasocket = new PrintWriter(sk.getOutputStream());
                         switch (paramsclissl[0]) {
                             case "LIST":
                                 // * log: se ha selecionado LIST
@@ -198,7 +196,7 @@ public class LFTClient {
                                 salidasocket.println(paramsclissl[0]);
                                 salidasocket.flush(); // no dejamos ningún byte restante
                                 // Esperamos su respuesta
-                                Scanner entradassl = new Scanner(clienteSSL.getInputStream());
+                                Scanner entradassl = new Scanner(sk.getInputStream());
                                 String totalprocesado = entradassl.nextLine();
                                 /*
                                  * Se desea fragmentar la línea en diferentes tokens = archivos, para mostrarlos
@@ -232,57 +230,6 @@ public class LFTClient {
         }.start(); // Objeto anónimo
     }
 
-    public void sirveNonSSL(Socket clinot, String carpeta_cliente) {
-        boolean SALIR_NON_SSL = false;
-        try {
-            while (!SALIR_NON_SSL) {
-                menu();
-                // Lectura por teclado de opción del cliente
-                Scanner scii = new Scanner(System.in);
-                // Leo la línea introducida
-                String linea_teclado2 = scii.nextLine();
-                // Cada palabra es un parámetro para el servidor (en un array)
-                String[] paramsclinot = linea_teclado2.split(" ");
-                PrintWriter salidaclinot = new PrintWriter(clinot.getOutputStream());
-                switch (paramsclinot[0]) {
-                    case "LIST":
-                        // * log: se ha selecionado LIST
-                        // Enviamos por el socket SSL el LIST al servidor
-                        salidaclinot.println(paramsclinot[0]);
-                        salidaclinot.flush(); // no dejamos ningún byte restante
-                        // Esperamos su respuesta
-                        Scanner entradassl = new Scanner(clienteSSL.getInputStream());
-                        String totalprocesado = entradassl.nextLine();
-                        /*
-                         * Se desea fragmentar la línea en diferentes tokens = archivos, para mostrarlos
-                         * por pantalla
-                         */
-                        String lineas[] = totalprocesado.split("\n");
-                        String archivos[] = lineas[0].split(" ");
-                        System.out.print("Lista de archivos en el servidor: ");
-                        for (int i = 0; i < archivos.length; i++) {
-                            System.out.println((i + 1) + ". " + archivos[i]);
-                        }
-                        entradassl.close();
-                        // * log: LIST finalizó correctamente
-                        break;
-                    case "GET":
-                        break;
-                    case "PUT":
-                        break;
-                    case "SALIR":
-                        // * log: Saliendo...
-                        SALIR_NON_SSL = true;
-                        scii.close();
-                        break;
-                }
-            }
-        } catch (IOException ioe) {
-            System.err.println(ioe.getMessage());
-            // ! log: error en la entrada/salida + ioe.printStackTrace();
-        }
-    }
-
     public void menu() {
         /* Listar las opciones de cliente, tanto ssl como no ssl */
         System.out.println("LIST: Listar los ficheros almacenados en la carpeta del servidor" +
@@ -291,5 +238,57 @@ public class LFTClient {
                 "\nSALIR");
     }
 }
+
+// public void sirveNonSSL(Socket clinot, String carpeta_cliente) {
+// boolean SALIR_NON_SSL = false;
+// try {
+// while (!SALIR_NON_SSL) {
+// menu();
+// // Lectura por teclado de opción del cliente
+// Scanner scii = new Scanner(System.in);
+// // Leo la línea introducida
+// String linea_teclado2 = scii.nextLine();
+// // Cada palabra es un parámetro para el servidor (en un array)
+// String[] paramsclinot = linea_teclado2.split(" ");
+// PrintWriter salidaclinot = new PrintWriter(clinot.getOutputStream());
+// switch (paramsclinot[0]) {
+// case "LIST":
+// // * log: se ha selecionado LIST
+// // Enviamos por el socket SSL el LIST al servidor
+// salidaclinot.println(paramsclinot[0]);
+// salidaclinot.flush(); // no dejamos ningún byte restante
+// // Esperamos su respuesta
+// Scanner entradassl = new Scanner(clinot.getInputStream());
+// String totalprocesado = entradassl.nextLine();
+// /*
+// * Se desea fragmentar la línea en diferentes tokens = archivos, para
+// mostrarlos
+// * por pantalla
+// */
+// String lineas[] = totalprocesado.split("\n");
+// String archivos[] = lineas[0].split(" ");
+// System.out.print("Lista de archivos en el servidor: ");
+// for (int i = 0; i < archivos.length; i++) {
+// System.out.println((i + 1) + ". " + archivos[i]);
+// }
+// entradassl.close();
+// // * log: LIST finalizó correctamente
+// break;
+// case "GET":
+// break;
+// case "PUT":
+// break;
+// case "SALIR":
+// // * log: Saliendo...
+// SALIR_NON_SSL = true;
+// scii.close();
+// break;
+// }
+// }
+// } catch (IOException ioe) {
+// System.err.println(ioe.getMessage());
+// // ! log: error en la entrada/salida + ioe.printStackTrace();
+// }
+// }
 
 // TODO: Implementar los logs de acciones y errores

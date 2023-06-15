@@ -1,5 +1,6 @@
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -28,7 +29,7 @@ public class LFTServer {
     private static int maximumClients;
 
     private SSLServerSocket serverSocket;
-	private Socket clientSocket;
+    private Socket clientSocket;
 
     public static void main(String[] args) throws IOException {
         LFTServer _miServidor = new LFTServer();
@@ -79,14 +80,15 @@ public class LFTServer {
             try {
                 // 1. Acceso al almacén de claves
                 KeyStore keyStore = KeyStore.getInstance("JKS");
-                keyStore.load(new FileInputStream(javaPath + "serverKey.jks"),"servpass".toCharArray());
+                keyStore.load(new FileInputStream(javaPath + "serverKey.jks"), "servpass".toCharArray());
 
                 // 2. Acceso a las claves del almacén
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 kmf.init(keyStore, "servpass".toCharArray());
                 KeyManager[] keyManagers = kmf.getKeyManagers();
 
-                // 3. ACCESO AL ALMACEN DE CLAVES "ServerTrustedStore.jks" con password servpass (Por defecto)
+                // 3. ACCESO AL ALMACEN DE CLAVES "ServerTrustedStore.jks" con password servpass
+                // (Por defecto)
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath + "ServerTrustedStore.jks"), "servpass".toCharArray());
 
@@ -97,20 +99,22 @@ public class LFTServer {
                 // 4. Obtener un SSLSocketFactory y un socket cliente
                 try {
                     SSLContext sc = SSLContext.getInstance("SSL");
-                    sc.init(keyManagers, trustManagers, null); // con doble handshake los dos primeros parametro en cliente y servidor
-
+                    // doble handshake con params en cliente y servidor
+                    sc.init(keyManagers, trustManagers, null);
                     SSLServerSocketFactory ssf = sc.getServerSocketFactory();
-					serverSocket = (SSLServerSocket) ssf.createServerSocket(puerto);
-                // 5. Intercambio de certificados
+                    serverSocket = (SSLServerSocket) ssf.createServerSocket(puerto);
+                    // 5. Intercambio de certificados
                     serverSocket.setNeedClientAuth(true);
-                    System.out.println("servidor arrancado...");
-					while (actualClients <= maximumClients) {
-						serverSocket.accept();
-                        //* log: peticion de cliente aceptada
-						SSLSocket miSocketCliente = (SSLSocket) serverSocket.accept();
-						sirve(miSocketCliente);
-						actualClients++;
-					}
+                    // admitimos tantas peticiones como clientes máximos especificados
+                    System.out.println("Iniciando servidor...");
+
+                    while (actualClients <= maximumClients) {
+                        serverSocket.accept();
+                        // * log: peticion de cliente aceptada
+                        SSLSocket miSocketCliente = (SSLSocket) serverSocket.accept();
+                        actualClients++;
+                        sirve(miSocketCliente, true);
+                    }
 
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
@@ -132,6 +136,36 @@ public class LFTServer {
                 System.err.println(uke.getMessage());
                 // ! log: la key no se puede recuperar
             }
+        } else {
+            /* Servidor no funcionando a través de SSL */
+            try {
+                ServerSocket serversk = new ServerSocket(puerto);
+                // En este punto el servidor (non_ssl) se ha creado y espera al cliente
+                System.out.println("Iniciando servidor...");
+
+                // admitimos tantas peticiones como clientes máximos
+                while (actualClients <= maximumClients) {
+                    clientSocket = serversk.accept();
+                    actualClients++;
+                    sirve(clientSocket, false);
+                }
+                serversk.close();
+            } catch (IOException ioe) {
+                System.err.println(ioe.getMessage());
+            }
         }
     }
+
+    public void sirve(Socket socket, boolean sslactivated) {
+        new Thread() {
+            public void run() {
+                if (sslactivated) {
+                    System.out.println("WIP");
+                } else {
+                    System.out.println("WIP");
+                }
+            }
+        }.start();
+    }
+
 }
