@@ -1,10 +1,13 @@
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -182,13 +185,16 @@ public class LFTClient {
                 boolean SALIR_SSL = false;
                 Scanner sn = new Scanner(System.in);
                 try {
+                    InputStream input = sk.getInputStream();
+                    OutputStream output = sk.getOutputStream();
+
+                    byte[] alojar = new byte[__MAX_BUFFER];
+                    int bytesEsperados, bytesLeidos = 0, bytesLeidosTotales = 0;
+                    String[] cadena;
                     while (!SALIR_SSL) {
                         menu();
                         String linea_teclado = sn.nextLine();
                         String[] paramsclissl = linea_teclado.split(" ", 2);
-
-                        InputStream input = sk.getInputStream();
-                        OutputStream output = sk.getOutputStream();
                         switch (paramsclissl[0]) {
                             case "LIST":
                                 // * log: se ha selecionado LIST
@@ -196,23 +202,69 @@ public class LFTClient {
                                 // Enviamos por el socket SSL el LIST al servidor
                                 output.write(paramsclissl[0].getBytes());
                                 output.flush(); // no dejamos ningún byte restante
-                                // Esperamos su respuesta
-                                String totalprocesado = new String(input.readAllBytes());
 
-                                /*
-                                 * Se desea fragmentar la línea en diferentes tokens = archivos, para mostrarlos
-                                 * por pantalla
-                                 */
+                                // Primera parte: tamaño de llegada
+                                input.read(alojar, 0, __MAX_BUFFER);
+                                cadena = new String(alojar).split("/");
+                                
+                                // Segunda parte: recibir el listado
+                                bytesEsperados = Integer.parseInt(cadena[0]);
+                                //? System.out.println(bytesEsperados);
+                                byte[] listado = new byte[bytesEsperados];
 
-                                String lineas[] = totalprocesado.split("\n");
-                                String archivos[] = lineas[0].split(" ");
-                                System.out.print("Lista de archivos en el servidor: ");
-                                for (int i = 0; i < archivos.length; i++) {
-                                    System.out.println((i + 1) + ". " + archivos[i]);
+                                while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) { //
+                                    bytesLeidos = input.read(listado, bytesLeidosTotales, bytesEsperados);
+                                    if (bytesLeidos != -1) { //
+                                        bytesLeidosTotales += bytesLeidos;
+                                    }
                                 }
+
+                                // terminada la interacción: comprobamos: ¿Se recibió todo o se rompió el canal?
+                                if (bytesLeidosTotales == bytesEsperados)
+                                    System.out.println(new String(listado));
+                                else
+                                    System.err.println("Comunicación rota!");
+
+
+                                // String lineas[] = totalprocesado.split("\n");
+                                // String archivos[] = lineas[0].split(" ");
+                                // System.out.print("Lista de archivos en el servidor: ");
+                                // for (int i = 0; i < archivos.length; i++) {
+                                // System.out.println((i + 1) + ". " + archivos[i]);
+                                // }
+
                                 // * log: LIST finalizó correctamente
                                 break;
                             case "GET":
+                                String obtener = paramsclissl[0] +" "+ paramsclissl[1];
+                                //? System.out.println(obtener);
+                                output.write(obtener.getBytes());
+                                output.flush();
+
+                                input.read(alojar, 0, __MAX_BUFFER);
+                                cadena = new String(alojar).split("/");
+
+                                bytesEsperados = Integer.parseInt(cadena[0]);
+                                System.out.println("Necesito en total "+bytesEsperados+" bytes para alojar el archivo.\n");
+
+                                byte[] archivo = new byte[bytesEsperados];
+                                // while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) { //
+                                //     bytesLeidos = input.read(archivo, bytesLeidosTotales, bytesEsperados);
+                                //     if (bytesLeidos != -1) { //
+                                //         bytesLeidosTotales += bytesLeidos;
+                                //         System.out.println(bytesLeidosTotales);
+                                //     }
+                                // }
+                                bytesLeidos = input.read(archivo);
+                                if (bytesLeidos!=-1){
+                                    System.out.println("Escritura finalizada correctamente.");
+                                    String ruta=carpetaCliente+"/"+paramsclissl[1].trim();
+                                    System.out.println("Escribiendo "+ruta+"...");
+                                    File nuevo_arch_cli = new File(ruta);
+                                    Files.write(nuevo_arch_cli.toPath(), archivo);
+                                }
+                                else
+                                    System.err.println("Comunicación rota!");
                                 break;
                             case "PUT":
                                 break;
@@ -228,6 +280,12 @@ public class LFTClient {
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());
                     // ! log: error en la entrada/salida + ioe.printStackTrace();
+                } catch (NumberFormatException nfe) {
+                    System.err.println(nfe.getMessage());
+                    // ! log: error con la petición introducida
+                } catch (IndexOutOfBoundsException ioobe) {
+                    System.err.println(ioobe.getMessage());
+                    // ! log: error de índice de un array. Probablemente en la escritura del archivo
                 }
             }
         }.start(); // Objeto anónimo

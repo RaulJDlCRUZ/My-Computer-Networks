@@ -19,7 +19,7 @@
             "request": "launch",
             "mainClass": "LFTClient",
             "projectName": "redesIItteoricoEX_d9664767",
-            "args": ["127.0.0.1", "7133", "/home/raul/LFT_Cliente/"]
+            "args": ["127.0.0.1", "7133", "/home/raul/LFT_Cliente"]
             //"args": ["modoSSL", "127.0.0.1", "7133", "/home/raul/Escritorio/"]
         },
         /*
@@ -31,7 +31,7 @@
             "request": "launch",
             "mainClass": "LFTServer",
             "projectName": "redesIItteoricoEX_d9664767",
-            "args": ["7133", "/home/raul/LFT_Servidor/", "1"]
+            "args": ["7133", "/home/raul/LFT_Servidor", "1"]
             //"args": ["modoSSL", "8641", "/home/raul/Escritorio/", "1"]
         }
     ]

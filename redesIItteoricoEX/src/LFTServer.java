@@ -1,9 +1,15 @@
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -64,8 +70,8 @@ public class LFTServer {
                     break;
             }
             System.out.println(
-                    "Se han recogido los argumentos correctamente. <modoSSL=" + modoSSL + "> <puerto=" + puerto
-                            + "> <carpeta_servidor=" + carpetaServidor + "> <max_clientes=" + maximumClients);
+                    "Se han recogido los argumentos correctamente:\n<modoSSL=" + modoSSL + "> <puerto=" + puerto
+                            + "> <carpeta_servidor=" + carpetaServidor + "> <max_clientes=" + maximumClients + ">");
             // * log los argumentos
             _miServidor.start(modoSSL, puerto, carpetaServidor, maximumClients);
         } catch (Exception e) {
@@ -112,11 +118,12 @@ public class LFTServer {
                     System.out.println("Iniciando servidor...");
 
                     while (actualClients <= maximumClients) {
+                        // TODO
                         serverSocket.accept();
                         // * log: peticion de cliente aceptada
                         SSLSocket miSocketCliente = (SSLSocket) serverSocket.accept();
                         actualClients++;
-                        sirve(miSocketCliente, true);
+                        // sirve(miSocketCliente, true);
                     }
 
                 } catch (KeyManagementException kme) {
@@ -140,37 +147,109 @@ public class LFTServer {
                 // ! log: la key no se puede recuperar
             }
         } else {
-            /* Servidor funcionando sin SSL */
+            /*
+             * Servidor funcionando sin SSL. En este caso el ServerSocket dependerá
+             * únicamente del puerto.
+             */
             try {
-				// Socket de servidor para esperar peticiones de la red
-				ServerSocket serverSocket = new ServerSocket(puerto);
-				System.out.println("Servidor> Servidor iniciado");
-				System.out.println("Servidor> En espera de cliente...");
-				// Socket de cliente
+                ServerSocket serverSocket = new ServerSocket(puerto);
+                // * log servidor iniciado non-ssl
+                /* El servidor nunca se cierra, siempre a la espera de peticiones de cliente */
+                while (true) {
+                    /*
+                     * Socket cliente asignado tras esperar una conexión de un cliente al servidor
+                     */
+                    clientSocket = serverSocket.accept();
+                    new NON_SSL_Handler(clientSocket).start();
+                }
+            } catch (IOException ioe) {
+                System.err.println(ioe.getMessage());
+                // ! log: error en la/salida + ioe.printStackTrace();
+            }
+        }
+    }
 
-				// en espera de conexion, si existe la acepta
-				clientSocket = serverSocket.accept();
-                actualClients++;
-				// Para leer lo que envie el cliente
-				InputStream input = clientSocket.getInputStream();
-				// para imprimir datos de salida
-				PrintStream output = new PrintStream(clientSocket.getOutputStream());
+    // clase hilo
+    public static class NON_SSL_Handler extends Thread {
 
-				byte[] buffer = new byte[__MAX_BUFFER];
-				while (actualClients <= maximumClients) {
-					// se lee peticion del cliente
-					input.read(buffer, 0, buffer.length);
-					String request = new String(buffer);
-					System.out.println("Cliente> peticion [" + request + "]");
-					//! String[] parts = request.split("#");
+        int bytesLeidos;
+        byte[] buffer = new byte[__MAX_BUFFER];
+        Socket clienteSocket;
 
-                    String[] parts = request.split(" ", 2);
-					String part1 = parts[0];
-					String part2 = parts[1];
+        /* Constructor */
+        NON_SSL_Handler(Socket cliente) {
+            clienteSocket = cliente;
+        }
 
-					//? System.out.println("request: "+request+"]\npart1: "+parts[0]+"]\npart2: "+parts[1]+"]");
-                    /*Desde aquí vamos a comprobar si el cliente desea finalizar su comunicación, para poder cerrar su socket de cliente */
-                    sirve(clientSocket, false);
+        @Override
+        public void run() {
+            try {
+                System.out.println("Cliente de " + clienteSocket.getPort() + " a " + clienteSocket.getInetAddress()
+                        + ":" + clienteSocket.getLocalPort());
+                /* Onjetos de Entrada/Salida para comunicarse con el Cliente */
+                InputStream in = clienteSocket.getInputStream();
+                OutputStream out = clienteSocket.getOutputStream();
+                while (actualClients <= maximumClients) {
+                    /* Hay hueco disponible para una petición de un cliente */
+                    int bytesLeidos = in.read(buffer, 0, buffer.length);
+                    if (bytesLeidos != -1) {
+                        // * log peticion de un cliente aceptada
+                        String peticion_cli = new String(buffer);
+                        /* Compruebo que la petición del cliente no esté vacía */
+                        if (peticion_cli != null) {
+                            String[] argum_clients = peticion_cli.split(" ", 2);
+                            /*
+                             * En este punto tengo dos elementos: instrucción y parámetro (según el comando)
+                             */
+                            System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
+                                    + "], Parametro:<" + argum_clients[1] + ">");
+                            String enviar = "";
+                            if (argum_clients[0].equals("LIST")) {
+                                File fichero = new File(carpetaServidor);
+                                if (fichero.exists()) {// se comprueba si existe el el directorio
+                                    File[] arrayFicheros = fichero.listFiles();
+                                    for (int i = 0; i < arrayFicheros.length; i++) {
+                                        enviar += i + 1 + " : " + arrayFicheros[i].getName() + " ("
+                                                + arrayFicheros[i].length() + ")" + "\n";
+                                    }
+                                }
+                                int bytesAlojar = enviar.length();
+                                /* Enviamos el tamaño de la lista, para que el cliente pueda hacer espacio */
+                                byte[] espacio = solicitudAlojamiento(bytesAlojar);
+                                //? System.out.println(enviar);
+                                out.write(espacio, 0, espacio.length);
+                                out.flush();
+                                /* Enviamos el listado de archivos como tal */
+                                out.write(enviar.getBytes());
+                                out.flush();
+                            }
+                            else if (argum_clients[0].equals("GET")){
+                                try {
+                                    /* Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco */
+                                    String ruta = carpetaServidor+"/"+argum_clients[1].trim();
+                                    System.out.println(ruta);
+                                    File peticion = new File(ruta);
+                                    if (peticion.exists()){
+                                        /* Calculamos cuanto espacio necesita el cliente */
+                                        long tamanyo = peticion.length();
+                                        System.out.println(tamanyo);
+                                        byte[] alojar = solicitudAlojamiento(tamanyo);
+                                        out.write(alojar);
+                                        out.flush();
+                                        /* Enviamos los bytes del archivo */
+                                        byte[] bytes = Files.readAllBytes(peticion.toPath());
+                                        out.write(bytes);
+                                        out.flush();
+                                    } else {
+                                        System.err.println("No se puede localizar el fichero");
+                                    }
+                                } catch (ArrayIndexOutOfBoundsException aioobe) {
+                                    System.err.println(aioobe.getMessage());
+                                    //! log: numero incorrecto de argumentos en este caso
+                                }
+                            }
+                        }
+                    }
                 }
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
@@ -178,17 +257,15 @@ public class LFTServer {
         }
     }
 
-    public void sirve(Socket socket, boolean sslactivated) {
-        new Thread() {
-            public void run() {
-                if (sslactivated) {
-                    // TODO implementar y probar
-                    System.out.println("WIP i");
-                } else {
-                    System.out.println("WIP ii");
-                }
-            }
-        }.start();
+    public static byte[] solicitudAlojamiento (long cifra){
+        String cifras = Long.toString(cifra);
+        int length = cifras.length();
+        byte[] alojamiento = new byte[length + 1];
+        for (int i = 0; i < length; i++)
+        // Cada byte es una cifra del tamaño en bytes del listado
+            alojamiento[i] = Long.valueOf(cifras.charAt(i)).byteValue();
+        // Para no tener que usar el buffer entero, agregamos un separador
+        alojamiento[length] = (byte) '/';
+        return alojamiento;
     }
-
 }
