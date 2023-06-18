@@ -18,7 +18,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -32,12 +31,12 @@ public class LFTServer {
     private static String carpetaServidor;
     private static int actualClients;
     private static int maximumClients;
-
-    private SSLServerSocket serverSocket;
-    private Socket clientSocket;
+    private static InputStream in;
+    private static OutputStream out;
+    private ServerSocket servSok;
+    private static Socket clientSocket;
 
     public static void main(String[] args) throws IOException {
-        LFTServer _miServidor = new LFTServer();
         try {
             switch (args.length) {
                 case 3:
@@ -69,19 +68,18 @@ public class LFTServer {
                     "Se han recogido los argumentos correctamente:\n<modoSSL=" + modoSSL + "> <puerto=" + puerto
                             + "> <carpeta_servidor=" + carpetaServidor + "> <max_clientes=" + maximumClients + ">");
             // * log los argumentos
-            _miServidor.start(modoSSL, puerto, carpetaServidor, maximumClients);
+            LFTServer _miServidor = new LFTServer(modoSSL, puerto);
+            _miServidor.start();
         } catch (Exception e) {
             System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
             // ! ERROR + log <---- e.printStackTrace();
         }
     }
 
-    public void start(boolean modoSSL, int puerto, String carpetaServidor, int maximumClients) {
+    public LFTServer(boolean modoSSL, int puerto) {
         if (modoSSL) {
-
             /* Modo SSL Activado */
             // TODO log para cada paso en ssl
-            // TODO Probar que funcione el modo SSL
             try {
                 // 1. Acceso al almacén de claves
                 KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -93,7 +91,6 @@ public class LFTServer {
                 KeyManager[] keyManagers = kmf.getKeyManagers();
 
                 // 3. ACCESO AL ALMACEN DE CLAVES "ServerTrustedStore.jks" con password servpass
-                // (Por defecto)
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath + "ServerTrustedStore.jks"), "servpass".toCharArray());
 
@@ -107,23 +104,10 @@ public class LFTServer {
                     // doble handshake con params en cliente y servidor
                     sc.init(keyManagers, trustManagers, null);
                     SSLServerSocketFactory ssf = sc.getServerSocketFactory();
-                    serverSocket = (SSLServerSocket) ssf.createServerSocket(puerto);
+                    servSok = (SSLServerSocket) ssf.createServerSocket(puerto);
                     // 5. Intercambio de certificados
-                    serverSocket.setNeedClientAuth(true);
+                    ((SSLServerSocket) servSok).setNeedClientAuth(true);
                     System.out.println("Iniciando servidor SSL...");
-                    while (true){
-                        SSLSocket SSLclientSocket = (SSLSocket) serverSocket.accept();
-                        System.out.println("Cliente abierto.");
-                        // admitimos tantas peticiones como clientes máximos especificados
-                        if (++actualClients <= maximumClients) {
-                            System.out.println("Cliente aceptado.");
-                            new Handler(SSLclientSocket).start();
-                        } else {
-                            System.out.println("Cliente cerrado.");
-                            SSLclientSocket.close();
-                            actualClients--;
-                        }
-                    }
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
                     // ! log: el manejo de la clave impide definir la conexión SSL
@@ -145,29 +129,37 @@ public class LFTServer {
                 // ! log: la key no se puede recuperar
             }
         } else {
-            /*
-             * Servidor funcionando sin SSL. En este caso el ServerSocket dependerá
-             * únicamente del puerto.
-             */
             try {
-                ServerSocket serverSocket = new ServerSocket(puerto);
+                servSok = new ServerSocket(puerto);
                 // * log servidor iniciado non-ssl
                 /* El servidor nunca se cierra, siempre a la espera de peticiones de cliente */
                 System.out.println("Iniciando servidor NON-SSL...");
-                while (true) {
-                    /*
-                     * Socket cliente asignado tras esperar una conexión de un cliente al servidor
-                     */
-                    clientSocket = serverSocket.accept();
-                    while (actualClients <= maximumClients) {
-                        ++actualClients;
-                        new Handler(clientSocket).start();
-                    }
-                }
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
-                // ! log: error en la/salida + ioe.printStackTrace();
+                // ! log: error en la entrada/salida + ioe.printStackTrace();
             }
+        }
+    }
+
+    public void start() {
+        try {
+            while (true) {
+                clientSocket = servSok.accept();
+                System.out.println("Cliente abierto.");
+                // admitimos tantas peticiones como clientes máximos especificados
+                if (++actualClients <= maximumClients) {
+                    System.out.println("Cliente de " + clientSocket.getPort() + " a " + clientSocket.getInetAddress()
+                    + ":" + clientSocket.getLocalPort() + " aceptado.");
+                    new Handler(clientSocket).start();
+                } else {
+                    System.out.println("Cliente cerrado.");
+                    clientSocket.close();
+                    actualClients--;
+                }
+            }
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+            // ! log: error en la entrada/salida + ioe.printStackTrace();
         }
     }
 
@@ -176,90 +168,111 @@ public class LFTServer {
         int bytesLeidos;
         byte[] buffer = new byte[__MAX_BUFFER];
         Socket clienteSocket;
-        /* Constructor */
+
+        /* Constructor del manejador / hilo */
         Handler(Socket cliente) {
             clienteSocket = cliente;
         }
+
         @Override
         public void run() {
             try {
-                System.out.println("Cliente de " + clienteSocket.getPort() + " a " + clienteSocket.getInetAddress()
-                        + ":" + clienteSocket.getLocalPort());
                 /* Onjetos de Entrada/Salida para comunicarse con el Cliente */
-                InputStream in = clienteSocket.getInputStream();
-                OutputStream out = clienteSocket.getOutputStream();
-                while (actualClients <= maximumClients) {
-                    /* Hay hueco disponible para una petición de un cliente */
-                    int bytesLeidos = in.read(buffer, 0, buffer.length);
-                    if (bytesLeidos != -1) {
-                        // * log peticion de un cliente aceptada
-                        String peticion_cli = new String(buffer);
-                        /* Compruebo que la petición del cliente no esté vacía */
-                        if (peticion_cli != null) {
-                            String[] argum_clients = peticion_cli.split(" ", 2);
-                            /*
-                             * En este punto tengo dos elementos: instrucción y parámetro (según el comando)
-                             */
-                            System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
-                                    + "], Parametro:<" + argum_clients[1] + ">");
-                            String enviar = "";
-                            if (argum_clients[0].equals("LIST")) {
-                                File fichero = new File(carpetaServidor);
-                                if (fichero.exists()) {// se comprueba si existe el el directorio
-                                    File[] arrayFicheros = fichero.listFiles();
-                                    for (int i = 0; i < arrayFicheros.length; i++) {
-                                        enviar += i + 1 + " : " + arrayFicheros[i].getName() + " ("
-                                                + arrayFicheros[i].length() + ")" + "\n";
-                                    }
-                                }
-                                int bytesAlojar = enviar.length();
-                                /* Enviamos el tamaño de la lista, para que el cliente pueda hacer espacio */
-                                byte[] espacio = solicitudAlojamiento(bytesAlojar);
-                                // ? System.out.println(enviar);
-                                out.write(espacio, 0, espacio.length);
-                                out.flush();
-                                /* Enviamos el listado de archivos como tal */
-                                out.write(enviar.getBytes());
-                                out.flush();
-                            } else if (argum_clients[0].equals("GET")) {
-                                try {
-                                    /* Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco */
-                                    String ruta = carpetaServidor + "/" + argum_clients[1].trim();
-                                    // ? System.out.println(ruta);
-                                    File peticion = new File(ruta);
-                                    if (peticion.exists()) {
-                                        /* Calculamos cuanto espacio necesita el cliente */
-                                        long tamanyo = peticion.length();
-                                        // ? System.out.println(tamanyo);
-                                        byte[] alojar = solicitudAlojamiento(tamanyo);
-                                        out.write(alojar);
-                                        out.flush();
-                                        /* Enviamos los bytes del archivo */
-                                        int bytesArchivoLeidos;
-                                        FileInputStream fins = new FileInputStream(peticion);
-                                        byte buffer[] = new byte[__MAX_BUFFER];
-                                        while ((bytesArchivoLeidos = fins.read(buffer)) != -1) {
-                                            out.write(buffer, 0, bytesArchivoLeidos);
-                                            out.flush();
-                                        }
-                                        fins.close();
-                                    } else {
-                                        System.err.println("No se puede localizar el fichero");
-                                    }
-                                } catch (ArrayIndexOutOfBoundsException aioobe) {
-                                    System.err.println(aioobe.getMessage());
-                                    // ! log: numero incorrecto de argumentos en este caso
-                                } catch (FileNotFoundException fnfe) {
-                                    System.err.println(fnfe.getMessage());
-                                    // ! log: archivo no
-                                }
-                            }
-                        }
+                in = clienteSocket.getInputStream();
+                out = clienteSocket.getOutputStream();
+                int bytesLeidos = in.read(buffer, 0, buffer.length);
+                if (bytesLeidos != -1) {
+                    String peticion_cli = new String(buffer);
+                    if (peticion_cli != null) {
+                        String[] argum_clients = peticion_cli.split(" ", 2);
+                        System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
+                                + "], Parametro:<" + argum_clients[1] + ">");
+                        sirve(argum_clients[0], argum_clients[1]);
+                        buffer = null;
                     }
                 }
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
             }
+        }
+    }
+
+    public static void sirve(String comando, String parametro) {
+        try {
+            String enviar = "";
+            switch (comando.trim()) {
+                case "LIST":
+                    File fichero = new File(carpetaServidor);
+                    if (fichero.exists()) {// se comprueba si existe el el directorio
+                        File[] arrayFicheros = fichero.listFiles();
+                        for (int i = 0; i < arrayFicheros.length; i++) {
+                            enviar += i + 1 + " : " + arrayFicheros[i].getName() + " ("
+                                    + arrayFicheros[i].length() + ")" + "\n";
+                        }
+                    }
+                    int bytesAlojar = enviar.length();
+                    /* Calculamos cuánto debe alojar el cliente exactamente */
+                    byte[] espacio = solicitudAlojamiento(bytesAlojar);
+                    // ? System.out.println(enviar);
+                    /* Servidor envia el espacio a utilizar */
+                    out.write(espacio, 0, espacio.length);
+                    out.flush();
+                    /* Enviamos el listado de archivos como tal */
+                    out.write(enviar.getBytes());
+                    out.flush();
+                    espacio = null;
+                    break;
+                case "GET":
+                    if (parametro.trim().equals("")) {
+                        // Esto no es coherente
+                    } else {
+                        try {
+                            /* Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco */
+                            String ruta = carpetaServidor + "/" + parametro.trim();
+                            // ? System.out.println(ruta);
+                            File peticion = new File(ruta);
+                            if (peticion.exists()) {
+                                /* Calculamos cuanto espacio necesita el cliente */
+                                long tamanyo = peticion.length();
+                                // ? System.out.println(tamanyo);
+                                byte[] alojar = solicitudAlojamiento(tamanyo);
+                                out.write(alojar);
+                                out.flush();
+                                /* Enviamos los bytes del archivo */
+                                int bytesArchivoLeidos;
+                                FileInputStream fins = new FileInputStream(peticion);
+                                byte buffer2[] = new byte[__MAX_BUFFER];
+                                while ((bytesArchivoLeidos = fins.read(buffer2)) != -1) {
+                                    out.write(buffer2, 0, bytesArchivoLeidos);
+                                    out.flush();
+                                }
+                                fins.close();
+                            } else {
+                                System.err.println("No se puede localizar el fichero");
+                            }
+                        } catch (ArrayIndexOutOfBoundsException aioobe) {
+                            System.err.println(aioobe.getMessage());
+                            // ! log: numero incorrecto de argumentos en este caso
+                        } catch (FileNotFoundException fnfe) {
+                            System.err.println(fnfe.getMessage());
+                            // ! log: archivo no
+                        }
+                    }
+                    break;
+                case "PUT":
+                    break;
+                case "SALIR":
+                    System.out.println(clientSocket.getPort()+" quiere salir");
+                    String exit = clientSocket.getPort()+"/EXIT";
+                    out.write(exit.getBytes());
+                    out.flush();
+                    actualClients--;
+                    clientSocket.close();
+                    break;
+            }
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+            // ! log: error en la entrada/salida + ioe.printStackTrace();
         }
     }
 

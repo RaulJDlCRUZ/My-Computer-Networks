@@ -27,17 +27,13 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-
     private static final int __MAX_BUFFER = 1024;
-
     private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
     private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
-
     private static boolean modoSSL = false;
     private static String host;
     private static int puerto;
     private static String carpetaCliente;
-
     public static void main(String[] args) throws IOException {
         LFTClient _miCliente = new LFTClient();
         try {
@@ -128,7 +124,7 @@ public class LFTClient {
                     // 6. Handshake por parte del cliente
                     clienteSSL.startHandshake();
                     System.out.println("El cliente ha establecido la conexión a través de Secure Sockets Layer (SSL).");
-                    HandlerSSLClient(clienteSSL, carpetaCliente);
+                    HandlerClient(clienteSSL, carpetaCliente);
                     // * log de finalización del acuerdo cliente-servidor
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
@@ -156,7 +152,7 @@ public class LFTClient {
                 Socket clienteNoSSL = new Socket(ip_host, puerto);
                 System.out.println("Conexión establecida a través de TCP sin protocolo TLS.");
                 // * log de establecimiento conexión non-ssl
-                HandlerSSLClient(clienteNoSSL, carpetaCliente);
+                HandlerClient(clienteNoSSL, carpetaCliente);
                 // clienteNoSSL.close();
             } catch (UnknownHostException uhe) {
                 System.err.println(uhe.getMessage());
@@ -169,17 +165,16 @@ public class LFTClient {
         }
     }
 
-    public void HandlerSSLClient(Socket sk, String carpeta_cliente) {
+    public void HandlerClient(Socket sk, String carpeta_cliente) {
         // * log: cliente SSL arrancado
         new Thread() {
             @Override
             public void run() {
                 boolean SALIR_SSL = false;
                 Scanner sn = new Scanner(System.in);
-                try {
+                try {                    
                     InputStream input = sk.getInputStream();
                     OutputStream output = sk.getOutputStream();
-
                     byte[] alojar = new byte[__MAX_BUFFER];
                     int bytesEsperados, bytesLeidos = 0, bytesLeidosTotales = 0;
                     String[] cadena;
@@ -191,9 +186,8 @@ public class LFTClient {
                             case "LIST":
                                 // * log: se ha selecionado LIST
                                 paramsclissl[0] += " ";
-                                // Enviamos por el socket SSL el LIST al servidor
                                 output.write(paramsclissl[0].getBytes());
-                                output.flush(); // no dejamos ningún byte restante
+                                output.flush();
 
                                 // Primera parte: tamaño de llegada
                                 input.read(alojar, 0, __MAX_BUFFER);
@@ -214,9 +208,9 @@ public class LFTClient {
                                 // terminada la interacción: comprobamos: ¿Se recibió todo o se rompió el canal?
                                 if (bytesLeidosTotales == bytesEsperados)
                                     System.out.println(new String(listado));
-                                else
+                                else{
                                     System.err.println("Comunicación rota!");
-
+                                }
                                 // * log: LIST finalizó correctamente
                                 break;
                             case "GET":
@@ -247,25 +241,32 @@ public class LFTClient {
                                         System.out.println(100*bytesLeidosTotales/bytesEsperados+"%");
                                     }
                                 }
-
                                 fous.close();
                                 
                                 if(bytesLeidosTotales!=bytesEsperados){
                                     System.err.println("Comunicación rota.");
                                 }
-
                                 break;
                             case "PUT":
                                 break;
                             case "SALIR":
-                                System.out.println("Saliendo y cerrando socket...");
-                                // * log: Saliendo...
-                                SALIR_SSL = true;
-                                input.close();
-                                sk.close();
+                                paramsclissl[0] += " ";
+                                output.write(paramsclissl[0].getBytes());
+                                output.flush(); // no dejamos ningún byte restante
+                                input.read(alojar,0,__MAX_BUFFER);
+                                String[] salir = new String(alojar).split("/", 2);
+                                System.out.println("["+salir[0]+"]\n["+salir[1]+"]");
+                                // if(salir[0].trim().equals(sk.getPort()) && salir[1].trim().equals("EXIT")){
+                                //     // * log: Saliendo...
+                                //     SALIR_SSL = true;
+                                //     input.close();
+                                //     sk.close();
+                                // }
                                 break;
                         }
+                        output.flush();
                     }
+                    // sk.close();
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());
                     // ! log: error en la entrada/salida + ioe.printStackTrace();
