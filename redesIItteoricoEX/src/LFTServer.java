@@ -4,12 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -28,7 +24,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class LFTServer {
 
-    private String javaPath = "/usr/lib/jvm/java-20-openjdk/lib/security/"; // ruta a security
+    private String javaPath = "/home/raul/LFT_Certificados_RJC/"; // ruta a mis certificados
 
     private static final int __MAX_BUFFER = 1024;
     private static boolean modoSSL = false;
@@ -114,18 +110,20 @@ public class LFTServer {
                     serverSocket = (SSLServerSocket) ssf.createServerSocket(puerto);
                     // 5. Intercambio de certificados
                     serverSocket.setNeedClientAuth(true);
-                    // admitimos tantas peticiones como clientes máximos especificados
-                    System.out.println("Iniciando servidor...");
-
-                    while (actualClients <= maximumClients) {
-                        // TODO
-                        serverSocket.accept();
-                        // * log: peticion de cliente aceptada
-                        SSLSocket miSocketCliente = (SSLSocket) serverSocket.accept();
-                        actualClients++;
-                        // sirve(miSocketCliente, true);
+                    System.out.println("Iniciando servidor SSL...");
+                    while (true){
+                        SSLSocket SSLclientSocket = (SSLSocket) serverSocket.accept();
+                        System.out.println("Cliente abierto.");
+                        // admitimos tantas peticiones como clientes máximos especificados
+                        if (++actualClients <= maximumClients) {
+                            System.out.println("Cliente aceptado.");
+                            new Handler(SSLclientSocket).start();
+                        } else {
+                            System.out.println("Cliente cerrado.");
+                            SSLclientSocket.close();
+                            actualClients--;
+                        }
                     }
-
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
                     // ! log: el manejo de la clave impide definir la conexión SSL
@@ -155,12 +153,16 @@ public class LFTServer {
                 ServerSocket serverSocket = new ServerSocket(puerto);
                 // * log servidor iniciado non-ssl
                 /* El servidor nunca se cierra, siempre a la espera de peticiones de cliente */
+                System.out.println("Iniciando servidor NON-SSL...");
                 while (true) {
                     /*
                      * Socket cliente asignado tras esperar una conexión de un cliente al servidor
                      */
                     clientSocket = serverSocket.accept();
-                    new NON_SSL_Handler(clientSocket).start();
+                    while (actualClients <= maximumClients) {
+                        ++actualClients;
+                        new Handler(clientSocket).start();
+                    }
                 }
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
@@ -169,18 +171,15 @@ public class LFTServer {
         }
     }
 
-    // clase hilo
-    public static class NON_SSL_Handler extends Thread {
-
+    // Manejador de peticiones del servidor
+    public static class Handler extends Thread {
         int bytesLeidos;
         byte[] buffer = new byte[__MAX_BUFFER];
         Socket clienteSocket;
-
         /* Constructor */
-        NON_SSL_Handler(Socket cliente) {
+        Handler(Socket cliente) {
             clienteSocket = cliente;
         }
-
         @Override
         public void run() {
             try {
@@ -216,36 +215,43 @@ public class LFTServer {
                                 int bytesAlojar = enviar.length();
                                 /* Enviamos el tamaño de la lista, para que el cliente pueda hacer espacio */
                                 byte[] espacio = solicitudAlojamiento(bytesAlojar);
-                                //? System.out.println(enviar);
+                                // ? System.out.println(enviar);
                                 out.write(espacio, 0, espacio.length);
                                 out.flush();
                                 /* Enviamos el listado de archivos como tal */
                                 out.write(enviar.getBytes());
                                 out.flush();
-                            }
-                            else if (argum_clients[0].equals("GET")){
+                            } else if (argum_clients[0].equals("GET")) {
                                 try {
                                     /* Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco */
-                                    String ruta = carpetaServidor+"/"+argum_clients[1].trim();
-                                    System.out.println(ruta);
+                                    String ruta = carpetaServidor + "/" + argum_clients[1].trim();
+                                    // ? System.out.println(ruta);
                                     File peticion = new File(ruta);
-                                    if (peticion.exists()){
+                                    if (peticion.exists()) {
                                         /* Calculamos cuanto espacio necesita el cliente */
                                         long tamanyo = peticion.length();
-                                        System.out.println(tamanyo);
+                                        // ? System.out.println(tamanyo);
                                         byte[] alojar = solicitudAlojamiento(tamanyo);
                                         out.write(alojar);
                                         out.flush();
                                         /* Enviamos los bytes del archivo */
-                                        byte[] bytes = Files.readAllBytes(peticion.toPath());
-                                        out.write(bytes);
-                                        out.flush();
+                                        int bytesArchivoLeidos;
+                                        FileInputStream fins = new FileInputStream(peticion);
+                                        byte buffer[] = new byte[__MAX_BUFFER];
+                                        while ((bytesArchivoLeidos = fins.read(buffer)) != -1) {
+                                            out.write(buffer, 0, bytesArchivoLeidos);
+                                            out.flush();
+                                        }
+                                        fins.close();
                                     } else {
                                         System.err.println("No se puede localizar el fichero");
                                     }
                                 } catch (ArrayIndexOutOfBoundsException aioobe) {
                                     System.err.println(aioobe.getMessage());
-                                    //! log: numero incorrecto de argumentos en este caso
+                                    // ! log: numero incorrecto de argumentos en este caso
+                                } catch (FileNotFoundException fnfe) {
+                                    System.err.println(fnfe.getMessage());
+                                    // ! log: archivo no
                                 }
                             }
                         }
@@ -257,15 +263,16 @@ public class LFTServer {
         }
     }
 
-    public static byte[] solicitudAlojamiento (long cifra){
+    public static byte[] solicitudAlojamiento(long cifra) {
         String cifras = Long.toString(cifra);
         int length = cifras.length();
         byte[] alojamiento = new byte[length + 1];
         for (int i = 0; i < length; i++)
-        // Cada byte es una cifra del tamaño en bytes del listado
+            // Cada byte es una cifra del tamaño en bytes del listado
             alojamiento[i] = Long.valueOf(cifras.charAt(i)).byteValue();
         // Para no tener que usar el buffer entero, agregamos un separador
         alojamiento[length] = (byte) '/';
+        // TODO probar con trim
         return alojamiento;
     }
 }

@@ -1,13 +1,11 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.math.BigInteger;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -32,8 +30,8 @@ public class LFTClient {
 
     private static final int __MAX_BUFFER = 1024;
 
-    private String javaPath = "/usr/lib/jvm/java-20-openjdk/lib/security/cacerts"; // ruta a trusted store -> cacerts
-    private String javaPathKeyStore = "{donde sea}/clientKey.jks"; // ruta a keymanager del cliente
+    private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
+    private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
 
     private static boolean modoSSL = false;
     private static String host;
@@ -87,35 +85,30 @@ public class LFTClient {
          * negativo un Socket normal.
          */
         if (modoSSL) {
-
-            /* Modo SSL Activado */
-            // TODO log para cada paso en ssl
-            // TODO Probar que funcione el modo SSL
+            /* Modo SSL Activado*/
+            /*
+             TODO Log SSL
+            */
             try {
                 // 1. Acceso al almacén de claves
                 KeyStore keyStore = KeyStore.getInstance("JKS");
                 keyStore.load(new FileInputStream(javaPathKeyStore), "clientpass".toCharArray());
-
                 // 2. Acceso a las claves del almacén
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 kmf.init(keyStore, "clientpass".toCharArray());
                 KeyManager[] keyManagers = kmf.getKeyManagers();
-
                 // 3. ACCESO AL ALMACEN DE CLAVES "cacerts" con password changeit (Por defecto)
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath), "changeit".toCharArray());
-
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 tmf.init(trustedStore);
                 TrustManager[] trustManagers = tmf.getTrustManagers();
-
                 // 4. Obtener un SSLSocketFactory y un socket cliente
                 try {
                     SSLContext sc = SSLContext.getInstance("SSL");
                     sc.init(keyManagers, trustManagers, null);
                     SSLSocketFactory ssf = sc.getSocketFactory();
                     SSLSocket clienteSSL = (SSLSocket) ssf.createSocket(ip_host, puerto);
-
                     // 5. Imprime info sobre el certificado del servidor
                     clienteSSL.addHandshakeCompletedListener(new HandshakeCompletedListener() {
                         @Override
@@ -125,7 +118,7 @@ public class LFTClient {
                                 cert = (X509Certificate) hce.getPeerCertificates()[0];
                                 String certName = cert.getSubjectX500Principal().getName().substring(3,
                                         cert.getSubjectX500Principal().getName().indexOf(","));
-                                System.out.println("conectado al servidor con nombre de certificado: " + certName);
+                                System.out.println("\n[Conectado al servidor con nombre de certificado: " + certName + "]\n");
                             } catch (SSLPeerUnverifiedException sslpue) {
                                 System.err.println(sslpue.getMessage());
                                 // ! log: conexión SSL no verificada. + sslpue.printStackTrace();
@@ -177,7 +170,6 @@ public class LFTClient {
     }
 
     public void HandlerSSLClient(Socket sk, String carpeta_cliente) {
-        System.out.println("Cliente de tipo SSL arrancado!");
         // * log: cliente SSL arrancado
         new Thread() {
             @Override
@@ -225,14 +217,6 @@ public class LFTClient {
                                 else
                                     System.err.println("Comunicación rota!");
 
-
-                                // String lineas[] = totalprocesado.split("\n");
-                                // String archivos[] = lineas[0].split(" ");
-                                // System.out.print("Lista de archivos en el servidor: ");
-                                // for (int i = 0; i < archivos.length; i++) {
-                                // System.out.println((i + 1) + ". " + archivos[i]);
-                                // }
-
                                 // * log: LIST finalizó correctamente
                                 break;
                             case "GET":
@@ -245,26 +229,31 @@ public class LFTClient {
                                 cadena = new String(alojar).split("/");
 
                                 bytesEsperados = Integer.parseInt(cadena[0]);
+                                // puedo poner aquí si es -1 (por parte del servidor) no lo hago porque no existe el archivo
                                 System.out.println("Necesito en total "+bytesEsperados+" bytes para alojar el archivo.\n");
 
-                                byte[] archivo = new byte[bytesEsperados];
-                                // while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) { //
-                                //     bytesLeidos = input.read(archivo, bytesLeidosTotales, bytesEsperados);
-                                //     if (bytesLeidos != -1) { //
-                                //         bytesLeidosTotales += bytesLeidos;
-                                //         System.out.println(bytesLeidosTotales);
-                                //     }
-                                // }
-                                bytesLeidos = input.read(archivo);
-                                if (bytesLeidos!=-1){
-                                    System.out.println("Escritura finalizada correctamente.");
-                                    String ruta=carpetaCliente+"/"+paramsclissl[1].trim();
-                                    System.out.println("Escribiendo "+ruta+"...");
-                                    File nuevo_arch_cli = new File(ruta);
-                                    Files.write(nuevo_arch_cli.toPath(), archivo);
+                                String ruta=carpetaCliente+"/"+paramsclissl[1].trim();
+                                System.out.println("Escribiendo "+ruta+"...");
+                                File nuevo_arch_cli = new File(ruta);
+                                /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
+                                FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
+
+                                byte[] buffer = new byte[__MAX_BUFFER];
+                                while(bytesLeidosTotales < bytesEsperados && bytesLeidos != -1){
+                                    bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER,bytesEsperados));
+                                    if(bytesLeidos != -1){
+                                        fous.write(buffer, 0, bytesLeidos);
+                                        bytesLeidosTotales+=bytesLeidos;
+                                        System.out.println(100*bytesLeidosTotales/bytesEsperados+"%");
+                                    }
                                 }
-                                else
-                                    System.err.println("Comunicación rota!");
+
+                                fous.close();
+                                
+                                if(bytesLeidosTotales!=bytesEsperados){
+                                    System.err.println("Comunicación rota.");
+                                }
+
                                 break;
                             case "PUT":
                                 break;
@@ -299,57 +288,5 @@ public class LFTClient {
                 "\nSALIR");
     }
 }
-
-// public void sirveNonSSL(Socket clinot, String carpeta_cliente) {
-// boolean SALIR_NON_SSL = false;
-// try {
-// while (!SALIR_NON_SSL) {
-// menu();
-// // Lectura por teclado de opción del cliente
-// Scanner scii = new Scanner(System.in);
-// // Leo la línea introducida
-// String linea_teclado2 = scii.nextLine();
-// // Cada palabra es un parámetro para el servidor (en un array)
-// String[] paramsclinot = linea_teclado2.split(" ");
-// PrintWriter salidaclinot = new PrintWriter(clinot.getOutputStream());
-// switch (paramsclinot[0]) {
-// case "LIST":
-// // * log: se ha selecionado LIST
-// // Enviamos por el socket SSL el LIST al servidor
-// salidaclinot.println(paramsclinot[0]);
-// salidaclinot.flush(); // no dejamos ningún byte restante
-// // Esperamos su respuesta
-// Scanner entradassl = new Scanner(clinot.getInputStream());
-// String totalprocesado = entradassl.nextLine();
-// /*
-// * Se desea fragmentar la línea en diferentes tokens = archivos, para
-// mostrarlos
-// * por pantalla
-// */
-// String lineas[] = totalprocesado.split("\n");
-// String archivos[] = lineas[0].split(" ");
-// System.out.print("Lista de archivos en el servidor: ");
-// for (int i = 0; i < archivos.length; i++) {
-// System.out.println((i + 1) + ". " + archivos[i]);
-// }
-// entradassl.close();
-// // * log: LIST finalizó correctamente
-// break;
-// case "GET":
-// break;
-// case "PUT":
-// break;
-// case "SALIR":
-// // * log: Saliendo...
-// SALIR_NON_SSL = true;
-// scii.close();
-// break;
-// }
-// }
-// } catch (IOException ioe) {
-// System.err.println(ioe.getMessage());
-// // ! log: error en la entrada/salida + ioe.printStackTrace();
-// }
-// }
 
 // TODO: Implementar los logs de acciones y errores
