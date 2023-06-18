@@ -124,7 +124,7 @@ public class LFTClient {
                     // 6. Handshake por parte del cliente
                     clienteSSL.startHandshake();
                     System.out.println("El cliente ha establecido la conexión a través de Secure Sockets Layer (SSL).");
-                    HandlerClient(clienteSSL, carpetaCliente);
+                    HandlerClient(clienteSSL);
                     // * log de finalización del acuerdo cliente-servidor
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
@@ -152,7 +152,7 @@ public class LFTClient {
                 Socket clienteNoSSL = new Socket(ip_host, puerto);
                 System.out.println("Conexión establecida a través de TCP sin protocolo TLS.");
                 // * log de establecimiento conexión non-ssl
-                HandlerClient(clienteNoSSL, carpetaCliente);
+                HandlerClient(clienteNoSSL);
                 // clienteNoSSL.close();
             } catch (UnknownHostException uhe) {
                 System.err.println(uhe.getMessage());
@@ -165,7 +165,7 @@ public class LFTClient {
         }
     }
 
-    public void HandlerClient(Socket sk, String carpeta_cliente) {
+    public void HandlerClient(Socket sk) {
         // * log: cliente SSL arrancado
         new Thread() {
             @Override
@@ -264,7 +264,6 @@ public class LFTClient {
                                 // }
                                 break;
                         }
-                        output.flush();
                     }
                     // sk.close();
                 } catch (IOException ioe) {

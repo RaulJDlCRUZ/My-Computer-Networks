@@ -144,13 +144,15 @@ public class LFTServer {
     public void start() {
         try {
             while (true) {
-                clientSocket = servSok.accept();
+                clientSocket = servSok.accept(); //! BLOQUEANTE
                 System.out.println("Cliente abierto.");
                 // admitimos tantas peticiones como clientes máximos especificados
                 if (++actualClients <= maximumClients) {
                     System.out.println("Cliente de " + clientSocket.getPort() + " a " + clientSocket.getInetAddress()
                     + ":" + clientSocket.getLocalPort() + " aceptado.");
                     new Handler(clientSocket).start();
+
+                    System.out.println("Termino aquí."); //?
                 } else {
                     System.out.println("Cliente cerrado.");
                     clientSocket.close();
@@ -162,14 +164,13 @@ public class LFTServer {
             // ! log: error en la entrada/salida + ioe.printStackTrace();
         }
     }
-
     // Manejador de peticiones del servidor
     public static class Handler extends Thread {
         int bytesLeidos;
         byte[] buffer = new byte[__MAX_BUFFER];
-        Socket clienteSocket;
+        final Socket clienteSocket;
 
-        /* Constructor del manejador / hilo */
+        /* Constructor del manejador o hilo */
         Handler(Socket cliente) {
             clienteSocket = cliente;
         }
@@ -188,7 +189,6 @@ public class LFTServer {
                         System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
                                 + "], Parametro:<" + argum_clients[1] + ">");
                         sirve(argum_clients[0], argum_clients[1]);
-                        buffer = null;
                     }
                 }
             } catch (IOException ioe) {
@@ -220,7 +220,6 @@ public class LFTServer {
                     /* Enviamos el listado de archivos como tal */
                     out.write(enviar.getBytes());
                     out.flush();
-                    espacio = null;
                     break;
                 case "GET":
                     if (parametro.trim().equals("")) {
@@ -267,9 +266,9 @@ public class LFTServer {
                     out.write(exit.getBytes());
                     out.flush();
                     actualClients--;
-                    clientSocket.close();
                     break;
             }
+            System.out.println("Termino de servir");
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
             // ! log: error en la entrada/salida + ioe.printStackTrace();
