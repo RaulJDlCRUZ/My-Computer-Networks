@@ -296,9 +296,10 @@ public class LFTServer {
                     String exit = clientSocket.getPort()+"/EXIT";
                     out.write(exit.getBytes());
                     out.flush();
-                    actualClients--;
+                    //  actualClients--;
                     break;
             }
+            actualClients--;
             System.out.println("Termino de servir");
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
