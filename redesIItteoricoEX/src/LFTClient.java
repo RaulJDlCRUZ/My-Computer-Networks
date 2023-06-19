@@ -255,17 +255,18 @@ public class LFTClient {
                                 output.flush(); // no dejamos ningún byte restante
                                 input.read(alojar,0,__MAX_BUFFER);
                                 String[] salir = new String(alojar).split("/", 2);
-                                System.out.println("["+salir[0]+"]\n["+salir[1]+"]");
-                                // if(salir[0].trim().equals(sk.getPort()) && salir[1].trim().equals("EXIT")){
-                                //     // * log: Saliendo...
-                                //     SALIR_SSL = true;
-                                //     input.close();
-                                //     sk.close();
-                                // }
+                                //? System.out.println("["+salir[0]+"] ["+salir[1]+"] ["+sk.getLocalPort()+"]");
+                                if((Integer.parseInt(salir[0].trim())) == sk.getLocalPort() && salir[1].trim().equals("EXIT")) {
+                                    // * log: Saliendo...
+                                    SALIR_SSL = true;
+                                    input.close();
+                                    output.close();
+                                    sk.close();
+                                    System.exit(0);
+                                }
                                 break;
                         }
                     }
-                    // sk.close();
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());
                     // ! log: error en la entrada/salida + ioe.printStackTrace();

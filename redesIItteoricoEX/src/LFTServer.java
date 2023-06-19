@@ -151,7 +151,6 @@ public class LFTServer {
                     System.out.println("Cliente de " + clientSocket.getPort() + " a " + clientSocket.getInetAddress()
                     + ":" + clientSocket.getLocalPort() + " aceptado.");
                     new Handler(clientSocket).start();
-
                     System.out.println("Termino aquí."); //?
                 } else {
                     System.out.println("Cliente cerrado.");
@@ -178,17 +177,19 @@ public class LFTServer {
         @Override
         public void run() {
             try {
-                /* Onjetos de Entrada/Salida para comunicarse con el Cliente */
                 in = clienteSocket.getInputStream();
                 out = clienteSocket.getOutputStream();
-                int bytesLeidos = in.read(buffer, 0, buffer.length);
-                if (bytesLeidos != -1) {
-                    String peticion_cli = new String(buffer);
-                    if (peticion_cli != null) {
-                        String[] argum_clients = peticion_cli.split(" ", 2);
-                        System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
-                                + "], Parametro:<" + argum_clients[1] + ">");
-                        sirve(argum_clients[0], argum_clients[1]);
+                /* Onjetos de Entrada/Salida para comunicarse con el Cliente */
+                while(actualClients <= maximumClients) {
+                    int bytesLeidos = in.read(buffer, 0, buffer.length);
+                    if (bytesLeidos != -1) {
+                        String peticion_cli = new String(buffer);
+                        if (peticion_cli != null) {
+                            String[] argum_clients = peticion_cli.split(" ", 2);
+                            System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
+                            + "], Parametro:<" + argum_clients[1] + ">");
+                            sirve(argum_clients[0], argum_clients[1]);
+                        }
                     }
                 }
             } catch (IOException ioe) {
