@@ -15,6 +15,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
+import java.util.logging.*;
+
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.KeyManager;
@@ -27,6 +29,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
+    private static String errorLogPath = "../Logs/Errores.log";
+    private static String accionLogPath = "../Logs/Acciones.log";
     private static final int __MAX_BUFFER = 1024;
     private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
     private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
@@ -48,6 +52,7 @@ public class LFTClient {
                         System.err.println(
                                 "La sintaxis empleada para la activación del SSL es incorrecta. En <modo> emplear \"modo=SSL\" para proceder con su activación");
                         // ! ERROR + log
+                        _miCliente.logWriter(errorLogPath, "ERROR La sintaxis empleada para la activación del SSL es incorrecta");
                         System.exit(1);
                     } else {
                         modoSSL = true;
@@ -60,16 +65,19 @@ public class LFTClient {
                     System.err.println(
                             "Los argumentos introducidos es incorrecto. Uso: <modo> <host> <puerto> <carpeta_cliente>");
                     // ! ERROR + log
+                    _miCliente.logWriter(errorLogPath, "ERROR: Argumentos introducidos incorrectamente");
                     System.exit(2);
                     break;
             }
             System.out.println("Se han recogido los argumentos correctamente. <modoSSL=" + modoSSL + "> <host=" + host
                     + "> <puerto=" + puerto + "> <carpeta_cliente=" + carpetaCliente + ">");
             // * log los argumentos
+            _miCliente.logWriter(accionLogPath, "Argumentos introducidos correctamente");
             _miCliente.start(modoSSL, host, puerto, carpetaCliente);
         } catch (Exception e) {
             System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
             // ! ERROR + log <---- e.printStackTrace();
+            _miCliente.logWriter(errorLogPath, "ERROR: " + e.getMessage());
         }
     }
 
@@ -118,6 +126,7 @@ public class LFTClient {
                             } catch (SSLPeerUnverifiedException sslpue) {
                                 System.err.println(sslpue.getMessage());
                                 // ! log: conexión SSL no verificada. + sslpue.printStackTrace();
+                                logWriter(errorLogPath, "ERROR Conexión SSL no verificada: " + sslpue.getMessage());
                             }
                         }
                     });
@@ -126,25 +135,32 @@ public class LFTClient {
                     System.out.println("El cliente ha establecido la conexión a través de Secure Sockets Layer (SSL).");
                     HandlerClient(clienteSSL);
                     // * log de finalización del acuerdo cliente-servidor
+                    logWriter(accionLogPath, "Finalizacion de acuerdo cliente-servidor");
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
                     // ! log: el manejo de la clave impide definir la conexión SSL
+                    logWriter(errorLogPath, "ERROR El manejo de la clave impide definir la conexión SSL");
                 }
             } catch (KeyStoreException kse) {
                 System.err.println(kse.getMessage());
                 // ! log: la key no se encuentra en el almacén de claves + printstack
+                logWriter(errorLogPath, "ERROR La key no se encuentra en el almacén de claves: "+kse.getMessage());
             } catch (NoSuchAlgorithmException nsae) {
                 System.err.println(nsae.getMessage());
                 // ! log: algoritmo de encriptación no encontrado
+                logWriter(errorLogPath, "ERROR Algoritmo de encriptación no encontrado");
             } catch (IOException ioe) { // También cubre la excepción del tipo FileNotFoundException
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
+                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
             } catch (CertificateException ce) {
                 System.err.println(ce.getMessage());
                 // ! log: el certificado no existe
+                logWriter(errorLogPath, "ERROR El certificado no existe");
             } catch (UnrecoverableKeyException uke) {
                 System.err.println(uke.getMessage());
                 // ! log: la key no se puede recuperar
+                logWriter(errorLogPath, "ERROR La key no se puede recuperar");
             }
         } else {
             /* No se usa SSL */
@@ -152,21 +168,25 @@ public class LFTClient {
                 Socket clienteNoSSL = new Socket(ip_host, puerto);
                 System.out.println("Conexión establecida a través de TCP sin protocolo TLS.");
                 // * log de establecimiento conexión non-ssl
+                logWriter(accionLogPath, "Establecimiento de conexión NON-SSL");
                 HandlerClient(clienteNoSSL);
                 // clienteNoSSL.close();
             } catch (UnknownHostException uhe) {
                 System.err.println(uhe.getMessage());
                 // ! log: la dirección del host es desconocida o inexistente +
+                logWriter(errorLogPath, "ERROR La direccion del Host es desconocida o inexistente: " + uhe.getMessage());
                 // uhe.printStackTrace();
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
+                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
             }
         }
     }
 
     public void HandlerClient(Socket sk) {
         // * log: cliente SSL arrancado
+        logWriter(accionLogPath, "Cliente SSL arrancado correctamente");
         new Thread() {
             @Override
             public void run() {
@@ -185,6 +205,7 @@ public class LFTClient {
                         switch (paramsclissl[0]) {
                             case "LIST":
                                 // * log: se ha selecionado LIST
+                                logWriter(accionLogPath, "Seleccionado LIST");
                                 paramsclissl[0] += " ";
                                 output.write(paramsclissl[0].getBytes());
                                 output.flush();
@@ -212,8 +233,11 @@ public class LFTClient {
                                     System.err.println("Comunicación rota!");
                                 }
                                 // * log: LIST finalizó correctamente
+                                logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
                                 break;
                             case "GET":
+                                // * log: Se ha seleccionado GET
+                                logWriter(accionLogPath, "Seleccionado GET");
                                 String obtener = paramsclissl[0] +" "+ paramsclissl[1];
                                 //? System.out.println(obtener);
                                 output.write(obtener.getBytes());
@@ -248,6 +272,8 @@ public class LFTClient {
                                 }
                                 break;
                             case "PUT":
+                                //  * log: Se ha seleccionado PUT
+                                logWriter(accionLogPath, "Seleccionado PUT");
                                 break;
                             case "SALIR":
                                 paramsclissl[0] += " ";
@@ -258,6 +284,7 @@ public class LFTClient {
                                 //? System.out.println("["+salir[0]+"] ["+salir[1]+"] ["+sk.getLocalPort()+"]");
                                 if((Integer.parseInt(salir[0].trim())) == sk.getLocalPort() && salir[1].trim().equals("EXIT")) {
                                     // * log: Saliendo...
+                                    logWriter(accionLogPath, "Cliente finalizando conexxión con el servidor");
                                     SALIR_SSL = true;
                                     input.close();
                                     output.close();
@@ -270,12 +297,15 @@ public class LFTClient {
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());
                     // ! log: error en la entrada/salida + ioe.printStackTrace();
+                    logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
                 } catch (NumberFormatException nfe) {
                     System.err.println(nfe.getMessage());
                     // ! log: error con la petición introducida
+                    logWriter(errorLogPath, "ERROR La petición introducida es incorrecta");
                 } catch (IndexOutOfBoundsException ioobe) {
                     System.err.println(ioobe.getMessage());
                     // ! log: error de índice de un array. Probablemente en la escritura del archivo
+                    logWriter(errorLogPath, "ERROR En el ínidce de un array durante la escritura");
                 }
             }
         }.start(); // Objeto anónimo
@@ -287,6 +317,30 @@ public class LFTClient {
                 "\nGET <archivo>: El servidor transferirá al cliente el fichero especificado" +
                 "\nPUT <archivo>: El cliente enviará al servidor el archivo introducido por teclado" +
                 "\nSALIR");
+    }
+
+    public void logWriter(String logPath, String logMessage){
+        Logger log = Logger.getLogger("Registro de Eventos");
+        FileHandler fileH;
+
+        try {
+            fileH = new FileHandler(logPath,true);
+            log.addHandler(fileH);
+
+            SimpleFormatter format = new SimpleFormatter();
+            fileH.setFormatter(format);
+
+            if(logPath.equals(accionLogPath)){
+                log.info(logMessage);
+            }else if(logPath.equals(errorLogPath)){
+                log.warning(logMessage);
+            }
+
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 }
 

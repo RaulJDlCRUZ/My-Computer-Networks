@@ -13,6 +13,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
+import java.util.logging.*;
+
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -22,6 +24,9 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTServer {
+
+    private static String errorLogPath = "../Logs/Errores.log";
+    private static String accionLogPath = "../Logs/Acciones.log";
 
     private String javaPath = "/home/raul/LFT_Certificados_RJC/"; // ruta a mis certificados
 
@@ -49,6 +54,7 @@ public class LFTServer {
                         System.err.println(
                                 "La sintaxis empleada para la activación del SSL es incorrecta. En <modo> emplear \"modo=SSL\" para proceder con su activación");
                         // ! ERROR + log
+                        logWriter(errorLogPath, "ERROR La sintaxis empleada para la activación del SSL es incorrecta");
                         System.exit(1);
                     } else {
                         modoSSL = true;
@@ -61,6 +67,7 @@ public class LFTServer {
                     System.err.println(
                             "Los argumentos introducidos es incorrecto. Uso: <modo> <puerto> <carpeta_servidor> <max_clientes>");
                     // ! ERROR + log
+                    logWriter(errorLogPath, "ERROR: Argumentos introducidos incorrectamente");
                     System.exit(2);
                     break;
             }
@@ -68,11 +75,13 @@ public class LFTServer {
                     "Se han recogido los argumentos correctamente:\n<modoSSL=" + modoSSL + "> <puerto=" + puerto
                             + "> <carpeta_servidor=" + carpetaServidor + "> <max_clientes=" + maximumClients + ">");
             // * log los argumentos
+            logWriter(accionLogPath, "Argumentos introducidos correctamente");
             LFTServer _miServidor = new LFTServer(modoSSL, puerto);
             _miServidor.start();
         } catch (Exception e) {
             System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
             // ! ERROR + log <---- e.printStackTrace();
+            logWriter(errorLogPath, "ERROR: " + e.getMessage());
         }
     }
 
@@ -111,32 +120,40 @@ public class LFTServer {
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
                     // ! log: el manejo de la clave impide definir la conexión SSL
+                    logWriter(errorLogPath, "ERROR El manejo de la clave impide definir la conexión SSL");
                 }
             } catch (KeyStoreException kse) {
                 System.err.println(kse.getMessage());
                 // ! log: la key no se encuentra en el almacén de claves + printstack
+                logWriter(errorLogPath, "ERROR La key no se encuentra en el almacén de claves: "+kse.getMessage());
             } catch (NoSuchAlgorithmException nsae) {
                 System.err.println(nsae.getMessage());
                 // ! log: algoritmo de encriptación no encontrado
+                logWriter(errorLogPath, "ERROR Algoritmo de encriptación no encontrado");
             } catch (IOException ioe) { // También cubre la excepción del tipo FileNotFoundException
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
+                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
             } catch (CertificateException ce) {
                 System.err.println(ce.getMessage());
                 // ! log: el certificado no existe
+                logWriter(errorLogPath, "ERROR El certificado no existe");
             } catch (UnrecoverableKeyException uke) {
                 System.err.println(uke.getMessage());
                 // ! log: la key no se puede recuperar
+                logWriter(errorLogPath, "ERROR La key no se puede recuperar");
             }
         } else {
             try {
                 servSok = new ServerSocket(puerto);
                 // * log servidor iniciado non-ssl
+                logWriter(accionLogPath, "Servidor iniciado en modo NON-SSL");
                 /* El servidor nunca se cierra, siempre a la espera de peticiones de cliente */
                 System.out.println("Iniciando servidor NON-SSL...");
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
+                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
             }
         }
     }
@@ -161,6 +178,7 @@ public class LFTServer {
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
             // ! log: error en la entrada/salida + ioe.printStackTrace();
+            logWriter(errorLogPath, "ERROR E/S: "+ioe.getMessage());
         }
     }
     // Manejador de peticiones del servidor
@@ -194,6 +212,8 @@ public class LFTServer {
                 }
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
+                // ! log: error en la entrada/salida + ioe.printStackTrace();
+                logWriter(errorLogPath, "ERROR E/S: "+ioe.getMessage());
             }
         }
     }
@@ -203,6 +223,8 @@ public class LFTServer {
             String enviar = "";
             switch (comando.trim()) {
                 case "LIST":
+                    //* Log: Recibida Petición LIST
+                    logWriter(accionLogPath, "Recibida Petición LIST");
                     File fichero = new File(carpetaServidor);
                     if (fichero.exists()) {// se comprueba si existe el el directorio
                         File[] arrayFicheros = fichero.listFiles();
@@ -226,6 +248,8 @@ public class LFTServer {
                     if (parametro.trim().equals("")) {
                         // Esto no es coherente
                     } else {
+                        //* Log: Recibida Petición GET
+                        logWriter(accionLogPath, "Recibida Petición GET");
                         try {
                             /* Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco */
                             String ruta = carpetaServidor + "/" + parametro.trim();
@@ -253,15 +277,21 @@ public class LFTServer {
                         } catch (ArrayIndexOutOfBoundsException aioobe) {
                             System.err.println(aioobe.getMessage());
                             // ! log: numero incorrecto de argumentos en este caso
+                            logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
                         } catch (FileNotFoundException fnfe) {
                             System.err.println(fnfe.getMessage());
                             // ! log: archivo no
+                            logWriter(errorLogPath, "ERROR Archivo no encontrado");
                         }
                     }
                     break;
                 case "PUT":
+                    //* Log: Recibida Petición PUT
+                    logWriter(accionLogPath, "Recibida Petición PUT");
                     break;
                 case "SALIR":
+                    //* Log: Recibida Petición SALIR
+                    logWriter(accionLogPath, "Recibida Petición SALIR");
                     System.out.println(clientSocket.getPort()+" quiere salir");
                     String exit = clientSocket.getPort()+"/EXIT";
                     out.write(exit.getBytes());
@@ -273,6 +303,7 @@ public class LFTServer {
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
             // ! log: error en la entrada/salida + ioe.printStackTrace();
+            logWriter(errorLogPath, "ERROR E/S: "+ioe.getMessage());
         }
     }
 
@@ -287,5 +318,29 @@ public class LFTServer {
         alojamiento[length] = (byte) '/';
         // TODO probar con trim
         return alojamiento;
+    }
+
+    public static void logWriter(String logPath, String logMessage){
+        Logger log = Logger.getLogger("Registro de Eventos");
+        FileHandler fileH;
+
+        try {
+            fileH = new FileHandler(logPath,true);
+            log.addHandler(fileH);
+
+            SimpleFormatter format = new SimpleFormatter();
+            fileH.setFormatter(format);
+
+            if(logPath.equals(accionLogPath)){
+                log.info(logMessage);
+            }else if(logPath.equals(errorLogPath)){
+                log.warning(logMessage);
+            }
+
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 }
