@@ -1,4 +1,4 @@
-import java.io.BufferedOutputStream;
+//import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -127,7 +127,7 @@ public class LFTServer {
             } catch (KeyStoreException kse) {
                 System.err.println(kse.getMessage());
                 // ! log: la key no se encuentra en el almacén de claves + printstack
-                logWriter(errorLogPath, "ERROR La key no se encuentra en el almacén de claves: "+kse.getMessage());
+                logWriter(errorLogPath, "ERROR La key no se encuentra en el almacén de claves: " + kse.getMessage());
             } catch (NoSuchAlgorithmException nsae) {
                 System.err.println(nsae.getMessage());
                 // ! log: algoritmo de encriptación no encontrado
@@ -135,7 +135,7 @@ public class LFTServer {
             } catch (IOException ioe) { // También cubre la excepción del tipo FileNotFoundException
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
-                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
+                logWriter(errorLogPath, "ERROR E/S " + ioe.getMessage());
             } catch (CertificateException ce) {
                 System.err.println(ce.getMessage());
                 // ! log: el certificado no existe
@@ -155,7 +155,7 @@ public class LFTServer {
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
-                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
+                logWriter(errorLogPath, "ERROR E/S " + ioe.getMessage());
             }
         }
     }
@@ -163,14 +163,14 @@ public class LFTServer {
     public void start() {
         try {
             while (true) {
-                clientSocket = servSok.accept(); //! BLOQUEANTE
+                clientSocket = servSok.accept(); // ! BLOQUEANTE
                 System.out.println("Cliente abierto.");
                 // admitimos tantas peticiones como clientes máximos especificados
                 if (++actualClients <= maximumClients) {
                     System.out.println("Cliente de " + clientSocket.getPort() + " a " + clientSocket.getInetAddress()
-                    + ":" + clientSocket.getLocalPort() + " aceptado.");
+                            + ":" + clientSocket.getLocalPort() + " aceptado.");
                     new Handler(clientSocket).start();
-                    System.out.println("Termino aquí."); //?
+                    System.out.println("Termino aquí."); // ?
                 } else {
                     System.out.println("Cliente cerrado.");
                     clientSocket.close();
@@ -180,9 +180,10 @@ public class LFTServer {
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
             // ! log: error en la entrada/salida + ioe.printStackTrace();
-            logWriter(errorLogPath, "ERROR E/S: "+ioe.getMessage());
+            logWriter(errorLogPath, "ERROR E/S: " + ioe.getMessage());
         }
     }
+
     // Manejador de peticiones del servidor
     public static class Handler extends Thread {
         int bytesLeidos;
@@ -200,14 +201,14 @@ public class LFTServer {
                 in = clienteSocket.getInputStream();
                 out = clienteSocket.getOutputStream();
                 /* Onjetos de Entrada/Salida para comunicarse con el Cliente */
-                while(actualClients <= maximumClients) {
+                while (actualClients <= maximumClients) {
                     int bytesLeidos = in.read(buffer, 0, buffer.length);
                     if (bytesLeidos != -1) {
                         String peticion_cli = new String(buffer);
                         if (peticion_cli != null) {
                             String[] argum_clients = peticion_cli.split(" ", 2);
                             System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
-                            + "], Parametro:<" + argum_clients[1] + ">");
+                                    + "], Parametro:<" + argum_clients[1] + ">");
                             sirve(argum_clients[0], argum_clients[1]);
                         }
                     }
@@ -215,17 +216,20 @@ public class LFTServer {
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
                 // ! log: error en la entrada/salida + ioe.printStackTrace();
-                logWriter(errorLogPath, "ERROR E/S: "+ioe.getMessage());
+                logWriter(errorLogPath, "ERROR E/S: " + ioe.getMessage());
             }
         }
     }
 
     public static void sirve(String comando, String parametro) {
         try {
+            byte[] alojar = new byte[__MAX_BUFFER];
+            int bytesEsperados, bytesLeidos = 0, bytesLeidosTotales = 0;
+            String[] cadena;
             String enviar = "";
             switch (comando.trim()) {
                 case "LIST":
-                    //* Log: Recibida Petición LIST
+                    // * Log: Recibida Petición LIST
                     logWriter(accionLogPath, "Recibida Petición LIST");
                     File fichero = new File(carpetaServidor);
                     if (fichero.exists()) {// se comprueba si existe el el directorio
@@ -250,7 +254,7 @@ public class LFTServer {
                     if (parametro.trim().equals("")) {
                         // Esto no es coherente
                     } else {
-                        //* Log: Recibida Petición GET
+                        // * Log: Recibida Petición GET
                         logWriter(accionLogPath, "Recibida Petición GET");
                         try {
                             /* Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco */
@@ -261,7 +265,7 @@ public class LFTServer {
                                 /* Calculamos cuanto espacio necesita el cliente */
                                 long tamanyo = peticion.length();
                                 // ? System.out.println(tamanyo);
-                                byte[] alojar = solicitudAlojamiento(tamanyo);
+                                alojar = solicitudAlojamiento(tamanyo);
                                 out.write(alojar);
                                 out.flush();
                                 /* Enviamos los bytes del archivo */
@@ -288,71 +292,100 @@ public class LFTServer {
                     }
                     break;
                 case "PUT":
-                    //* Log: Recibida Petición PUT
+                    // * Log: Recibida Petición PUT
                     logWriter(accionLogPath, "Recibida Petición PUT");
 
-                    //Recojemos el tamaño del archivo a alojar
-                    // byte [] alojarLlegada = new byte[__MAX_BUFFER];
-                    // in.read(alojarLlegada, 0, __MAX_BUFFER);
-                    // String [] cadena = new String(alojarLlegada).split("/");
-                    // int bytesEsperados = Integer.parseInt(cadena[0]);
+                    // Recojemos el tamaño del archivo a alojar
+                    in.read(alojar, 0, __MAX_BUFFER);
+                    cadena = new String(alojar).split("/");
+                    bytesEsperados = Integer.parseInt(cadena[0]);
 
-                    // System.out.println("Necesito en total "+bytesEsperados+" bytes para alojar el archivo.\n");
+                    System.out.println("Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
 
+                    String ruta = carpetaServidor + "/" + parametro.trim();
+                    System.out.println("Escribiendo " + ruta + "...");
+                    File nuevo_arch_serv = new File(ruta);
+
+                    FileOutputStream fous = new FileOutputStream(nuevo_arch_serv);
+
+                    byte[] buffer = new byte[__MAX_BUFFER];
+                    while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
+                        bytesLeidos = in.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
+                        if (bytesLeidos != -1) {
+                            fous.write(buffer, 0, bytesLeidos);
+                            bytesLeidosTotales += bytesLeidos;
+                            System.out.println(100 * bytesLeidosTotales / bytesEsperados + "%");
+                        }
+                    }
+                    fous.close();
+
+                    if (bytesLeidosTotales != bytesEsperados) {
+                        System.err.println("Comunicación rota.");
+                    }
+
+                    // try{
+                    // int bytesLeidos=0;
+                    // int actual=0;
                     // String ruta=carpetaServidor+"/"+parametro.trim();
                     // System.out.println("Escribiendo "+ruta+"...");
-                    // File nuevo_arch_serv = new File(ruta);
+                    // //File nuevo_arch_serv = new File(ruta);
+                    // FileOutputStream fileOS = new FileOutputStream(ruta);
+                    // BufferedOutputStream bufferedOS = new BufferedOutputStream(fileOS);
 
-                    // FileOutputStream fous = new FileOutputStream(nuevo_arch_serv);
+                    // byte [] alojarLlegada = new byte[__MAX_BUFFER];
 
-                    // byte[] buffer = new byte[__MAX_BUFFER];
-                    // int bytesLeidosTotales = 0, bytesLeidos=0;
-                    // while(bytesLeidosTotales<bytesEsperados && bytesLeidos!=-1){
-                    //     bytesLeidos = in.read(buffer, 0, Math.min(__MAX_BUFFER,bytesEsperados));
-                    //     if(bytesLeidos!=-1){
-                    //         fous.write(buffer, 0, bytesLeidos);
-                    //         bytesLeidosTotales += bytesLeidos;
-                    //         System.out.println(100*bytesLeidosTotales/bytesEsperados+"%");
-                    //     }
+                    // bytesLeidos = in.read(alojarLlegada, 0, alojarLlegada.length);
+                    // actual = bytesLeidos;
+
+                    // while(bytesLeidos>-1){
+                    // bytesLeidos = in.read(alojarLlegada, actual, (alojarLlegada.length-actual));
+                    // if(bytesLeidos >=0){
+                    // actual += bytesLeidos;
                     // }
-                    // fous.close();
-                                
-                    // if(bytesLeidosTotales!=bytesEsperados){
-                    //     System.err.println("Comunicación rota.");
                     // }
-                    int bytesLeidos;
-	    int current = 0;
-	    FileOutputStream fos = null;
-	    BufferedOutputStream bos = null;
-		try {
-			byte [] mybytearray  = new byte [1024 * 16];
-			fos = new FileOutputStream(carpetaServidor + "/"+ parametro.trim());
-			bos = new BufferedOutputStream(fos);
-			bytesLeidos = in.read(mybytearray, 0, mybytearray.length);
-			current = bytesLeidos;
-			
-			do {
-				bytesLeidos = in.read(mybytearray, current, (mybytearray.length-current));
-				if (bytesLeidos >= 0) current += bytesLeidos;
-			} while (bytesLeidos > -1);
-			
-			bos.write(mybytearray, 0, current);
-			System.out.println("Fichero: " + parametro +" bytes: " + current);
-			bos.flush();
-			bos.close();
-		} catch (Exception e) {
-			
-            logWriter(errorLogPath, e.toString());
-		}
+                    // bufferedOS.write(alojarLlegada, 0, actual);
+                    // System.out.println("Se ha colgado el fichero "+parametro+" con tamaño
+                    // "+actual+" correctamente.");
+                    // bufferedOS.flush();
+                    // bufferedOS.close();
+
+                    // }catch(Exception e){
+                    // System.err.println(e.getMessage());
+                    // }
+                    //////////////////////////////////////////////////////////////////////// !
+                    // int bytesLeidos;
+                    // int current = 0;
+                    // FileOutputStream fos = null;
+                    // BufferedOutputStream bos = null; //File y ya
+                    // try {
+                    // byte [] mybytearray = new byte [1024 * 16];
+                    // fos = new FileOutputStream(carpetaServidor + "/"+ parametro.trim());
+                    // bos = new BufferedOutputStream(fos);
+                    // bytesLeidos = in.read(mybytearray, 0, mybytearray.length);
+                    // current = bytesLeidos;
+
+                    // do {
+                    // bytesLeidos = in.read(mybytearray, current, (mybytearray.length-current));
+                    // if (bytesLeidos >= 0) current += bytesLeidos;
+                    // } while (bytesLeidos > -1);
+
+                    // bos.write(mybytearray, 0, current);
+                    // System.out.println("Fichero: " + parametro +" bytes: " + current);
+                    // bos.flush();
+                    // bos.close();
+                    // } catch (Exception e) {
+
+                    // logWriter(errorLogPath, e.toString());
+                    // }
                     break;
                 case "SALIR":
-                    //* Log: Recibida Petición SALIR
+                    // * Log: Recibida Petición SALIR
                     logWriter(accionLogPath, "Recibida Petición SALIR");
-                    System.out.println(clientSocket.getPort()+" quiere salir");
-                    String exit = clientSocket.getPort()+"/EXIT";
+                    System.out.println(clientSocket.getPort() + " quiere salir");
+                    String exit = clientSocket.getPort() + "/EXIT";
                     out.write(exit.getBytes());
                     out.flush();
-                    //  actualClients--;
+                    // actualClients--;
                     break;
             }
             System.out.println("El cliente ha sido desconectado del Servidor para dejar paso a otros clientes");
@@ -361,7 +394,7 @@ public class LFTServer {
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
             // ! log: error en la entrada/salida + ioe.printStackTrace();
-            logWriter(errorLogPath, "ERROR E/S: "+ioe.getMessage());
+            logWriter(errorLogPath, "ERROR E/S: " + ioe.getMessage());
         }
     }
 
@@ -378,26 +411,26 @@ public class LFTServer {
         return alojamiento;
     }
 
-    public static void logWriter(String logPath, String logMessage){
+    public static void logWriter(String logPath, String logMessage) {
         Logger log = Logger.getLogger("Registro de Eventos");
         FileHandler fileH;
 
         try {
-            fileH = new FileHandler(logPath,true);
+            fileH = new FileHandler(logPath, true);
             log.addHandler(fileH);
 
             SimpleFormatter format = new SimpleFormatter();
             fileH.setFormatter(format);
 
-            if(logPath.equals(accionLogPath)){
+            if (logPath.equals(accionLogPath)) {
                 log.info(logMessage);
-            }else if(logPath.equals(errorLogPath)){
+            } else if (logPath.equals(errorLogPath)) {
                 log.warning(logMessage);
             }
 
         } catch (SecurityException e) {
             e.printStackTrace();
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
