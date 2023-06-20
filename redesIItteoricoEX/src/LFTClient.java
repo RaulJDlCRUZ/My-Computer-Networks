@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -272,8 +273,73 @@ public class LFTClient {
                                 }
                                 break;
                             case "PUT":
-                                //  * log: Se ha seleccionado PUT
-                                logWriter(accionLogPath, "Seleccionado PUT");
+                                if(paramsclissl[1].trim().equals("")){
+                                    //No es Coherente
+                                }else{
+                                    try {
+                                        //  * log: Se ha seleccionado PUT
+                                        logWriter(accionLogPath, "Seleccionado PUT");
+                                        String enviar = paramsclissl[0] + " " + paramsclissl[1];
+        
+                                        //Notificamos al Servidor que hemos realizado una petición PUT
+                                        output.write(enviar.getBytes());
+                                        output.flush();
+        
+                                        String rutaEnviar = carpetaCliente+"/"+paramsclissl[1].trim();
+                                        File fileSend = new File(rutaEnviar);
+                                        if(fileSend.exists()){
+                                            //Cálculo del espacio que necesita el servidor
+                                            long fileSize = fileSend.length();
+                                            alojar = solicitudAlojamiento(fileSize);
+                                            output.write(alojar);
+                                            output.flush();
+                                            //Enviamos los bytes del fichero de la petición
+                                            int bytesFileRead;
+                                            FileInputStream fins = new FileInputStream(fileSend);
+                                            byte buffer2[] = new byte[__MAX_BUFFER];
+                                            while((bytesFileRead=fins.read(buffer2))!=-1){
+                                                output.write(buffer2, 0, bytesFileRead);
+                                                output.flush();
+                                            }
+                                            fins.close();
+                                        }else{
+                                            System.err.println("No se puede localizar el fichero");
+                                        }
+                                        
+                                    } catch (ArrayIndexOutOfBoundsException aioobe) {
+                                        System.err.println(aioobe.getMessage());
+                                        // ! log: numero incorrecto de argumentos en este caso
+                                        logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
+                                    } catch(FileNotFoundException fnfe){
+                                        System.err.println(fnfe.getMessage());
+                                        // ! log: archivo no
+                                        logWriter(errorLogPath, "ERROR Archivo no encontrado");
+                                    }
+                                }
+
+                            //     String ruta = carpetaServidor + "/" + parametro.trim();
+                            // // ? System.out.println(ruta);
+                            // File peticion = new File(ruta);
+                            // if (peticion.exists()) {
+                            //     /* Calculamos cuanto espacio necesita el cliente */
+                            //     long tamanyo = peticion.length();
+                            //     // ? System.out.println(tamanyo);
+                            //     byte[] alojar = solicitudAlojamiento(tamanyo);
+                            //     out.write(alojar);
+                            //     out.flush();
+                            //     /* Enviamos los bytes del archivo */
+                            //     int bytesArchivoLeidos;
+                            //     FileInputStream fins = new FileInputStream(peticion);
+                            //     byte buffer2[] = new byte[__MAX_BUFFER];
+                            //     while ((bytesArchivoLeidos = fins.read(buffer2)) != -1) {
+                            //         out.write(buffer2, 0, bytesArchivoLeidos);
+                            //         out.flush();
+                            //     }
+                            //     fins.close();
+                            // } else {
+                            //     System.err.println("No se puede localizar el fichero");
+                            // }
+
                                 break;
                             case "SALIR":
                                 paramsclissl[0] += " ";
@@ -327,6 +393,19 @@ public class LFTClient {
                 "\nGET <archivo>: El servidor transferirá al cliente el fichero especificado" +
                 "\nPUT <archivo>: El cliente enviará al servidor el archivo introducido por teclado" +
                 "\nSALIR");
+    }
+
+    public static byte[] solicitudAlojamiento(long cifra) {
+        String cifras = Long.toString(cifra);
+        int length = cifras.length();
+        byte[] alojamiento = new byte[length + 1];
+        for (int i = 0; i < length; i++)
+            // Cada byte es una cifra del tamaño en bytes del listado
+            alojamiento[i] = Long.valueOf(cifras.charAt(i)).byteValue();
+        // Para no tener que usar el buffer entero, agregamos un separador
+        alojamiento[length] = (byte) '/';
+        // TODO probar con trim
+        return alojamiento;
     }
 
     public void logWriter(String logPath, String logMessage){

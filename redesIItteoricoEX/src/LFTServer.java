@@ -1,6 +1,8 @@
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -288,6 +290,60 @@ public class LFTServer {
                 case "PUT":
                     //* Log: Recibida Petición PUT
                     logWriter(accionLogPath, "Recibida Petición PUT");
+
+                    //Recojemos el tamaño del archivo a alojar
+                    // byte [] alojarLlegada = new byte[__MAX_BUFFER];
+                    // in.read(alojarLlegada, 0, __MAX_BUFFER);
+                    // String [] cadena = new String(alojarLlegada).split("/");
+                    // int bytesEsperados = Integer.parseInt(cadena[0]);
+
+                    // System.out.println("Necesito en total "+bytesEsperados+" bytes para alojar el archivo.\n");
+
+                    // String ruta=carpetaServidor+"/"+parametro.trim();
+                    // System.out.println("Escribiendo "+ruta+"...");
+                    // File nuevo_arch_serv = new File(ruta);
+
+                    // FileOutputStream fous = new FileOutputStream(nuevo_arch_serv);
+
+                    // byte[] buffer = new byte[__MAX_BUFFER];
+                    // int bytesLeidosTotales = 0, bytesLeidos=0;
+                    // while(bytesLeidosTotales<bytesEsperados && bytesLeidos!=-1){
+                    //     bytesLeidos = in.read(buffer, 0, Math.min(__MAX_BUFFER,bytesEsperados));
+                    //     if(bytesLeidos!=-1){
+                    //         fous.write(buffer, 0, bytesLeidos);
+                    //         bytesLeidosTotales += bytesLeidos;
+                    //         System.out.println(100*bytesLeidosTotales/bytesEsperados+"%");
+                    //     }
+                    // }
+                    // fous.close();
+                                
+                    // if(bytesLeidosTotales!=bytesEsperados){
+                    //     System.err.println("Comunicación rota.");
+                    // }
+                    int bytesLeidos;
+	    int current = 0;
+	    FileOutputStream fos = null;
+	    BufferedOutputStream bos = null;
+		try {
+			byte [] mybytearray  = new byte [1024 * 16];
+			fos = new FileOutputStream(carpetaServidor + "/"+ parametro.trim());
+			bos = new BufferedOutputStream(fos);
+			bytesLeidos = in.read(mybytearray, 0, mybytearray.length);
+			current = bytesLeidos;
+			
+			do {
+				bytesLeidos = in.read(mybytearray, current, (mybytearray.length-current));
+				if (bytesLeidos >= 0) current += bytesLeidos;
+			} while (bytesLeidos > -1);
+			
+			bos.write(mybytearray, 0, current);
+			System.out.println("Fichero: " + parametro +" bytes: " + current);
+			bos.flush();
+			bos.close();
+		} catch (Exception e) {
+			
+            logWriter(errorLogPath, e.toString());
+		}
                     break;
                 case "SALIR":
                     //* Log: Recibida Petición SALIR
