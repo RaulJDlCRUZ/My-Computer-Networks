@@ -190,7 +190,7 @@ public class LFTClient {
         new Thread() {
             @Override
             public void run() {
-                boolean SALIR_SSL = false;
+                //boolean SALIR_SSL = false;
                 Scanner sn = new Scanner(System.in);
                 try {                    
                     InputStream input = sk.getInputStream();
@@ -198,7 +198,7 @@ public class LFTClient {
                     byte[] alojar = new byte[__MAX_BUFFER];
                     int bytesEsperados, bytesLeidos = 0, bytesLeidosTotales = 0;
                     String[] cadena;
-                    while (!SALIR_SSL) {
+                    //while (!SALIR_SSL) {
                         menu();
                         String linea_teclado = sn.nextLine();
                         String[] paramsclissl = linea_teclado.split(" ", 2);
@@ -285,7 +285,7 @@ public class LFTClient {
                                 if((Integer.parseInt(salir[0].trim())) == sk.getLocalPort() && salir[1].trim().equals("EXIT")) {
                                     // * log: Saliendo...
                                     logWriter(accionLogPath, "Cliente finalizando conexxión con el servidor");
-                                    SALIR_SSL = true;
+                                    //SALIR_SSL = true;
                                     input.close();
                                     output.close();
                                     sk.close();
@@ -293,7 +293,17 @@ public class LFTClient {
                                 }
                                 break;
                         }
-                    }
+                        //Finalizamos el programa tras realizarse una petición LIST, GET o PUT
+                        if(paramsclissl[0] != "SALIR "){
+                            System.out.println("Cliente desconectándose del servidor");
+                            input.close();
+                            output.close();
+                            sk.close();
+                            System.out.println("Cliente desconectado del servidor");
+                            System.exit(0);
+                        }
+                    //}
+                    sn.close();
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());
                     // ! log: error en la entrada/salida + ioe.printStackTrace();

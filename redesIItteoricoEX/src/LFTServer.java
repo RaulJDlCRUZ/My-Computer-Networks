@@ -299,6 +299,7 @@ public class LFTServer {
                     //  actualClients--;
                     break;
             }
+            System.out.println("El cliente ha sido desconectado del Servidor para dejar paso a otros clientes");
             actualClients--;
             System.out.println("Termino de servir");
         } catch (IOException ioe) {
