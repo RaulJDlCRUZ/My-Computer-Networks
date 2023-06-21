@@ -92,7 +92,7 @@ public class LFTServer {
     public LFTServer(boolean modoSSL, int puerto) {
         if (modoSSL) {
             /* Modo SSL Activado */
-            // TODO log para cada paso en ssl
+
             try {
                 // 1. Acceso al almacén de claves
                 logWriter(accionLogPath, "Acceso al al almacén de claves");
@@ -178,7 +178,7 @@ public class LFTServer {
                     System.out.println("Cliente de " + clientSocket.getPort() + " a " + clientSocket.getInetAddress()
                             + ":" + clientSocket.getLocalPort() + " aceptado.");
                     new Handler(clientSocket).start();
-                    System.out.println("Termino aquí."); // ?
+
                 } else {
                     System.out.println("Cliente cerrado.");
                     clientSocket.close();
@@ -239,7 +239,7 @@ public class LFTServer {
                                     int bytesAlojar = enviar.length();
                                     /* Calculamos cuánto debe alojar el cliente exactamente */
                                     byte[] espacio = solicitudAlojamiento(bytesAlojar);
-                                    // ? System.out.println(enviar);
+
                                     /* Servidor envia el espacio a utilizar */
                                     out.write(espacio, 0, espacio.length);
                                     out.flush();
@@ -260,7 +260,7 @@ public class LFTServer {
                                              * Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco
                                              */
                                             String ruta = carpetaServidor + "/" + argum_clients[1].trim();
-                                            // ? System.out.println(ruta);
+
                                             File peticion = new File(ruta);
                                             if (peticion.exists()) {
                                                 /* Calculamos cuanto espacio necesita el cliente */
@@ -301,7 +301,6 @@ public class LFTServer {
                                     // Recojemos el tamaño del archivo a alojar
                                     in.read(alojar, 0, __MAX_BUFFER);
                                     cadena = new String(alojar).split("/", 2);
-                                    System.out.println(cadena[0] + cadena[1]);
                                     bytesEsperados = Integer.parseInt(cadena[0]);
 
                                     System.out.println(
@@ -349,7 +348,6 @@ public class LFTServer {
                             System.out.println(
                                     "El cliente ha sido desconectado del Servidor para dejar paso a otros clientes");
                             actualClients--;
-                            System.out.println("Termino de servir");
                         }
                     }
                 }
