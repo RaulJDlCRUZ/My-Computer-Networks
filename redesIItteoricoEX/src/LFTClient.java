@@ -30,8 +30,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "../Logs/Errores.log";
-    private static String accionLogPath = "../Logs/Acciones.log";
+    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log";
+    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log";
     private static final int __MAX_BUFFER = 1024;
     private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
     private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
@@ -279,15 +279,14 @@ public class LFTClient {
                                     try {
                                         //  * log: Se ha seleccionado PUT
                                         logWriter(accionLogPath, "Seleccionado PUT");
-                                        String enviar = paramsclissl[0] + " " + paramsclissl[1];
-        
-                                        //Notificamos al Servidor que hemos realizado una petición PUT
-                                        output.write(enviar.getBytes());
-                                        output.flush();
-        
+                                        
                                         String rutaEnviar = carpetaCliente+"/"+paramsclissl[1].trim();
                                         File fileSend = new File(rutaEnviar);
                                         if(fileSend.exists()){
+                                            String enviar = paramsclissl[0].trim() + " " + paramsclissl[1].trim();
+                                            //Notificamos al Servidor que hemos realizado una petición PUT
+                                            output.write(enviar.getBytes());
+                                            output.flush();
                                             //Cálculo del espacio que necesita el servidor
                                             long fileSize = fileSend.length();
                                             alojar = solicitudAlojamiento(fileSize);
