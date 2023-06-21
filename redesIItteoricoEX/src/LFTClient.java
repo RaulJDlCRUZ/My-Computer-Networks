@@ -30,30 +30,36 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log";
-    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log";
+    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
+    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
     private static final int __MAX_BUFFER = 1024;
+
+    // Estas 2 variables de rutas varían según el computador y la distribucion del
+    // Sistema Operativo
     private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
     private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
+
     private static boolean modoSSL = false;
     private static String host;
     private static int puerto;
     private static String carpetaCliente;
+
     public static void main(String[] args) throws IOException {
         LFTClient _miCliente = new LFTClient();
         try {
             switch (args.length) {
-                case 3:
+                case 3: // No se usa modo SSL
                     host = args[0];
                     puerto = Integer.parseInt(args[1]);
                     carpetaCliente = args[2];
                     break;
-                case 4:
+                case 4: // Se usa modo SSL
                     if (args[0].equals("modo=SSL") == false) {
                         System.err.println(
                                 "La sintaxis empleada para la activación del SSL es incorrecta. En <modo> emplear \"modo=SSL\" para proceder con su activación");
-                        // ! ERROR + log
-                        _miCliente.logWriter(errorLogPath, "ERROR La sintaxis empleada para la activación del SSL es incorrecta");
+
+                        _miCliente.logWriter(errorLogPath,
+                                "ERROR La sintaxis empleada para la activación del SSL es incorrecta");
                         System.exit(1);
                     } else {
                         modoSSL = true;
@@ -65,19 +71,20 @@ public class LFTClient {
                 default:
                     System.err.println(
                             "Los argumentos introducidos es incorrecto. Uso: <modo> <host> <puerto> <carpeta_cliente>");
-                    // ! ERROR + log
+
                     _miCliente.logWriter(errorLogPath, "ERROR: Argumentos introducidos incorrectamente");
                     System.exit(2);
                     break;
             }
             System.out.println("Se han recogido los argumentos correctamente. <modoSSL=" + modoSSL + "> <host=" + host
                     + "> <puerto=" + puerto + "> <carpeta_cliente=" + carpetaCliente + ">");
-            // * log los argumentos
+
             _miCliente.logWriter(accionLogPath, "Argumentos introducidos correctamente");
+
             _miCliente.start(modoSSL, host, puerto, carpetaCliente);
         } catch (Exception e) {
-            System.err.println(e.getMessage()); // Mensaje genérico que mostrará información de la excepción
-            // ! ERROR + log <---- e.printStackTrace();
+            System.err.println(e.getMessage());
+
             _miCliente.logWriter(errorLogPath, "ERROR: " + e.getMessage());
         }
     }
@@ -90,30 +97,35 @@ public class LFTClient {
          * negativo un Socket normal.
          */
         if (modoSSL) {
-            /* Modo SSL Activado*/
-            /*
-             TODO Log SSL
-            */
+            /* Modo SSL Activado */
             try {
                 // 1. Acceso al almacén de claves
+                logWriter(accionLogPath, "Acceso al al almacén de claves");
                 KeyStore keyStore = KeyStore.getInstance("JKS");
                 keyStore.load(new FileInputStream(javaPathKeyStore), "clientpass".toCharArray());
+
                 // 2. Acceso a las claves del almacén
+                logWriter(accionLogPath, "Acceso a las claves del almacén");
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 kmf.init(keyStore, "clientpass".toCharArray());
                 KeyManager[] keyManagers = kmf.getKeyManagers();
+
                 // 3. ACCESO AL ALMACEN DE CLAVES "cacerts" con password changeit (Por defecto)
+                logWriter(accionLogPath, "Acceso al almade claves 'cacerts' con password changeit");
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath), "changeit".toCharArray());
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 tmf.init(trustedStore);
                 TrustManager[] trustManagers = tmf.getTrustManagers();
+
                 // 4. Obtener un SSLSocketFactory y un socket cliente
+                logWriter(accionLogPath, "Obtencion de un SSLSocketFactory y un socket cliente");
                 try {
                     SSLContext sc = SSLContext.getInstance("SSL");
                     sc.init(keyManagers, trustManagers, null);
                     SSLSocketFactory ssf = sc.getSocketFactory();
                     SSLSocket clienteSSL = (SSLSocket) ssf.createSocket(ip_host, puerto);
+
                     // 5. Imprime info sobre el certificado del servidor
                     clienteSSL.addHandshakeCompletedListener(new HandshakeCompletedListener() {
                         @Override
@@ -123,44 +135,48 @@ public class LFTClient {
                                 cert = (X509Certificate) hce.getPeerCertificates()[0];
                                 String certName = cert.getSubjectX500Principal().getName().substring(3,
                                         cert.getSubjectX500Principal().getName().indexOf(","));
-                                System.out.println("\n[Conectado al servidor con nombre de certificado: " + certName + "]\n");
+                                System.out.println(
+                                        "\n[Conectado al servidor con nombre de certificado: " + certName + "]\n");
+                                logWriter(accionLogPath, "Conectado al servidor SSL correctamente");
                             } catch (SSLPeerUnverifiedException sslpue) {
                                 System.err.println(sslpue.getMessage());
-                                // ! log: conexión SSL no verificada. + sslpue.printStackTrace();
+
                                 logWriter(errorLogPath, "ERROR Conexión SSL no verificada: " + sslpue.getMessage());
                             }
                         }
                     });
+
                     // 6. Handshake por parte del cliente
+                    logWriter(accionLogPath, "Inicio del Hansdshake por parte del cliente");
                     clienteSSL.startHandshake();
                     System.out.println("El cliente ha establecido la conexión a través de Secure Sockets Layer (SSL).");
                     HandlerClient(clienteSSL);
-                    // * log de finalización del acuerdo cliente-servidor
+
                     logWriter(accionLogPath, "Finalizacion de acuerdo cliente-servidor");
                 } catch (KeyManagementException kme) {
                     System.err.println(kme.getMessage());
-                    // ! log: el manejo de la clave impide definir la conexión SSL
+
                     logWriter(errorLogPath, "ERROR El manejo de la clave impide definir la conexión SSL");
                 }
             } catch (KeyStoreException kse) {
                 System.err.println(kse.getMessage());
-                // ! log: la key no se encuentra en el almacén de claves + printstack
-                logWriter(errorLogPath, "ERROR La key no se encuentra en el almacén de claves: "+kse.getMessage());
+
+                logWriter(errorLogPath, "ERROR La key no se encuentra en el almacén de claves: " + kse.getMessage());
             } catch (NoSuchAlgorithmException nsae) {
                 System.err.println(nsae.getMessage());
-                // ! log: algoritmo de encriptación no encontrado
+
                 logWriter(errorLogPath, "ERROR Algoritmo de encriptación no encontrado");
-            } catch (IOException ioe) { // También cubre la excepción del tipo FileNotFoundException
+            } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
-                // ! log: error en la entrada/salida + ioe.printStackTrace();
-                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
+
+                logWriter(errorLogPath, "ERROR E/S " + ioe.getMessage());
             } catch (CertificateException ce) {
                 System.err.println(ce.getMessage());
-                // ! log: el certificado no existe
+
                 logWriter(errorLogPath, "ERROR El certificado no existe");
             } catch (UnrecoverableKeyException uke) {
                 System.err.println(uke.getMessage());
-                // ! log: la key no se puede recuperar
+
                 logWriter(errorLogPath, "ERROR La key no se puede recuperar");
             }
         } else {
@@ -168,218 +184,207 @@ public class LFTClient {
             try {
                 Socket clienteNoSSL = new Socket(ip_host, puerto);
                 System.out.println("Conexión establecida a través de TCP sin protocolo TLS.");
-                // * log de establecimiento conexión non-ssl
+
                 logWriter(accionLogPath, "Establecimiento de conexión NON-SSL");
                 HandlerClient(clienteNoSSL);
-                // clienteNoSSL.close();
+
             } catch (UnknownHostException uhe) {
                 System.err.println(uhe.getMessage());
-                // ! log: la dirección del host es desconocida o inexistente +
-                logWriter(errorLogPath, "ERROR La direccion del Host es desconocida o inexistente: " + uhe.getMessage());
-                // uhe.printStackTrace();
+
+                logWriter(errorLogPath,
+                        "ERROR La direccion del Host es desconocida o inexistente: " + uhe.getMessage());
+
             } catch (IOException ioe) {
                 System.err.println(ioe.getMessage());
-                // ! log: error en la entrada/salida + ioe.printStackTrace();
-                logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
+
+                logWriter(errorLogPath, "ERROR E/S " + ioe.getMessage());
             }
         }
     }
 
     public void HandlerClient(Socket sk) {
-        // * log: cliente SSL arrancado
-        logWriter(accionLogPath, "Cliente SSL arrancado correctamente");
+
+        logWriter(accionLogPath, "Cliente arrancado correctamente");
         new Thread() {
             @Override
             public void run() {
-                //boolean SALIR_SSL = false;
+
                 Scanner sn = new Scanner(System.in);
-                try {                    
+                try {
                     InputStream input = sk.getInputStream();
                     OutputStream output = sk.getOutputStream();
                     byte[] alojar = new byte[__MAX_BUFFER];
                     int bytesEsperados, bytesLeidos = 0, bytesLeidosTotales = 0;
                     String[] cadena;
-                    //while (!SALIR_SSL) {
-                        menu();
-                        String linea_teclado = sn.nextLine();
-                        String[] paramsclissl = linea_teclado.split(" ", 2);
-                        switch (paramsclissl[0]) {
-                            case "LIST":
-                                // * log: se ha selecionado LIST
-                                logWriter(accionLogPath, "Seleccionado LIST");
-                                paramsclissl[0] += " ";
-                                output.write(paramsclissl[0].getBytes());
-                                output.flush();
+                    // while (!SALIR_SSL) {
+                    menu();
+                    String linea_teclado = sn.nextLine();
+                    String[] paramsclissl = linea_teclado.split(" ", 2);
+                    switch (paramsclissl[0]) {
+                        case "LIST":
 
-                                // Primera parte: tamaño de llegada
-                                input.read(alojar, 0, __MAX_BUFFER);
-                                cadena = new String(alojar).split("/");
-                                
-                                // Segunda parte: recibir el listado
-                                bytesEsperados = Integer.parseInt(cadena[0]);
-                                //? System.out.println(bytesEsperados);
-                                byte[] listado = new byte[bytesEsperados];
+                            logWriter(accionLogPath, "Seleccionado LIST");
+                            paramsclissl[0] += " ";
+                            output.write(paramsclissl[0].getBytes());
+                            output.flush();
 
-                                while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) { //
-                                    bytesLeidos = input.read(listado, bytesLeidosTotales, bytesEsperados);
-                                    if (bytesLeidos != -1) { //
-                                        bytesLeidosTotales += bytesLeidos;
-                                    }
+                            // Primera parte: tamaño de llegada
+                            input.read(alojar, 0, __MAX_BUFFER);
+                            cadena = new String(alojar).split("/");
+
+                            // Segunda parte: recibir el listado
+                            bytesEsperados = Integer.parseInt(cadena[0]);
+                            // ? System.out.println(bytesEsperados);
+                            byte[] listado = new byte[bytesEsperados];
+
+                            while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) { //
+                                bytesLeidos = input.read(listado, bytesLeidosTotales, bytesEsperados);
+                                if (bytesLeidos != -1) { //
+                                    bytesLeidosTotales += bytesLeidos;
                                 }
+                            }
 
-                                // terminada la interacción: comprobamos: ¿Se recibió todo o se rompió el canal?
-                                if (bytesLeidosTotales == bytesEsperados)
-                                    System.out.println(new String(listado));
-                                else{
-                                    System.err.println("Comunicación rota!");
+                            // terminada la interacción: comprobamos: ¿Se recibió todo o se rompió el canal?
+                            if (bytesLeidosTotales == bytesEsperados)
+                                System.out.println(new String(listado));
+                            else {
+                                System.err.println("Comunicación rota!");
+                            }
+
+                            logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
+                            break;
+                        case "GET":
+
+                            logWriter(accionLogPath, "Seleccionado GET");
+
+                            String obtener = paramsclissl[0] + " " + paramsclissl[1];
+
+                            output.write(obtener.getBytes());
+                            output.flush();
+
+                            input.read(alojar, 0, __MAX_BUFFER);
+                            cadena = new String(alojar).split("/");
+
+                            bytesEsperados = Integer.parseInt(cadena[0]);
+                            // puedo poner aquí si es -1 (por parte del servidor) no lo hago porque no
+                            // existe el archivo
+                            System.out.println(
+                                    "Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
+
+                            String ruta = carpetaCliente + "/" + paramsclissl[1].trim();
+                            System.out.println("Escribiendo " + ruta + "...");
+                            File nuevo_arch_cli = new File(ruta);
+                            /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
+                            FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
+
+                            byte[] buffer = new byte[__MAX_BUFFER];
+                            while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
+                                bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
+                                if (bytesLeidos != -1) {
+                                    fous.write(buffer, 0, bytesLeidos);
+                                    bytesLeidosTotales += bytesLeidos;
+                                    System.out.println(100 * bytesLeidosTotales / bytesEsperados + "%");
                                 }
-                                // * log: LIST finalizó correctamente
-                                logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
-                                break;
-                            case "GET":
-                                // * log: Se ha seleccionado GET
-                                logWriter(accionLogPath, "Seleccionado GET");
-                                String obtener = paramsclissl[0] +" "+ paramsclissl[1];
-                                //? System.out.println(obtener);
-                                output.write(obtener.getBytes());
-                                output.flush();
+                            }
+                            fous.close();
 
-                                input.read(alojar, 0, __MAX_BUFFER);
-                                cadena = new String(alojar).split("/");
+                            if (bytesLeidosTotales != bytesEsperados) {
+                                System.err.println("Comunicación rota.");
+                            }
 
-                                bytesEsperados = Integer.parseInt(cadena[0]);
-                                // puedo poner aquí si es -1 (por parte del servidor) no lo hago porque no existe el archivo
-                                System.out.println("Necesito en total "+bytesEsperados+" bytes para alojar el archivo.\n");
+                            logWriter(accionLogPath, "Ejecución GET finalizada");
 
-                                String ruta=carpetaCliente+"/"+paramsclissl[1].trim();
-                                System.out.println("Escribiendo "+ruta+"...");
-                                File nuevo_arch_cli = new File(ruta);
-                                /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
-                                FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
+                            break;
+                        case "PUT":
+                            if (paramsclissl[1].trim().equals("")) {
+                                // No es Coherente
+                            } else {
+                                try {
 
-                                byte[] buffer = new byte[__MAX_BUFFER];
-                                while(bytesLeidosTotales < bytesEsperados && bytesLeidos != -1){
-                                    bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER,bytesEsperados));
-                                    if(bytesLeidos != -1){
-                                        fous.write(buffer, 0, bytesLeidos);
-                                        bytesLeidosTotales+=bytesLeidos;
-                                        System.out.println(100*bytesLeidosTotales/bytesEsperados+"%");
-                                    }
-                                }
-                                fous.close();
-                                
-                                if(bytesLeidosTotales!=bytesEsperados){
-                                    System.err.println("Comunicación rota.");
-                                }
-                                break;
-                            case "PUT":
-                                if(paramsclissl[1].trim().equals("")){
-                                    //No es Coherente
-                                }else{
-                                    try {
-                                        //  * log: Se ha seleccionado PUT
-                                        logWriter(accionLogPath, "Seleccionado PUT");
-                                        
-                                        String rutaEnviar = carpetaCliente+"/"+paramsclissl[1].trim();
-                                        File fileSend = new File(rutaEnviar);
-                                        if(fileSend.exists()){
-                                            String enviar = paramsclissl[0].trim() + " " + paramsclissl[1].trim();
-                                            //Notificamos al Servidor que hemos realizado una petición PUT
-                                            output.write(enviar.getBytes());
+                                    logWriter(accionLogPath, "Seleccionado PUT");
+
+                                    String rutaEnviar = carpetaCliente + "/" + paramsclissl[1].trim();
+                                    File fileSend = new File(rutaEnviar);
+                                    if (fileSend.exists()) {
+                                        String enviar = paramsclissl[0].trim() + " " + paramsclissl[1].trim();
+                                        // Notificamos al Servidor que hemos realizado una petición PUT
+                                        output.write(enviar.getBytes());
+                                        output.flush();
+                                        // Cálculo del espacio que necesita el servidor
+                                        long fileSize = fileSend.length();
+                                        alojar = solicitudAlojamiento(fileSize);
+                                        output.write(alojar);
+                                        output.flush();
+                                        // Enviamos los bytes del fichero de la petición
+                                        int bytesFileRead;
+                                        FileInputStream fins = new FileInputStream(fileSend);
+                                        byte buffer2[] = new byte[__MAX_BUFFER];
+                                        while ((bytesFileRead = fins.read(buffer2)) != -1) {
+                                            output.write(buffer2, 0, bytesFileRead);
                                             output.flush();
-                                            //Cálculo del espacio que necesita el servidor
-                                            long fileSize = fileSend.length();
-                                            alojar = solicitudAlojamiento(fileSize);
-                                            output.write(alojar);
-                                            output.flush();
-                                            //Enviamos los bytes del fichero de la petición
-                                            int bytesFileRead;
-                                            FileInputStream fins = new FileInputStream(fileSend);
-                                            byte buffer2[] = new byte[__MAX_BUFFER];
-                                            while((bytesFileRead=fins.read(buffer2))!=-1){
-                                                output.write(buffer2, 0, bytesFileRead);
-                                                output.flush();
-                                            }
-                                            fins.close();
-                                        }else{
-                                            System.err.println("No se puede localizar el fichero");
                                         }
-                                        
-                                    } catch (ArrayIndexOutOfBoundsException aioobe) {
-                                        System.err.println(aioobe.getMessage());
-                                        // ! log: numero incorrecto de argumentos en este caso
-                                        logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
-                                    } catch(FileNotFoundException fnfe){
-                                        System.err.println(fnfe.getMessage());
-                                        // ! log: archivo no
-                                        logWriter(errorLogPath, "ERROR Archivo no encontrado");
+                                        fins.close();
+                                    } else {
+                                        System.err.println("No se puede localizar el fichero");
                                     }
-                                }
 
-                            //     String ruta = carpetaServidor + "/" + parametro.trim();
-                            // // ? System.out.println(ruta);
-                            // File peticion = new File(ruta);
-                            // if (peticion.exists()) {
-                            //     /* Calculamos cuanto espacio necesita el cliente */
-                            //     long tamanyo = peticion.length();
-                            //     // ? System.out.println(tamanyo);
-                            //     byte[] alojar = solicitudAlojamiento(tamanyo);
-                            //     out.write(alojar);
-                            //     out.flush();
-                            //     /* Enviamos los bytes del archivo */
-                            //     int bytesArchivoLeidos;
-                            //     FileInputStream fins = new FileInputStream(peticion);
-                            //     byte buffer2[] = new byte[__MAX_BUFFER];
-                            //     while ((bytesArchivoLeidos = fins.read(buffer2)) != -1) {
-                            //         out.write(buffer2, 0, bytesArchivoLeidos);
-                            //         out.flush();
-                            //     }
-                            //     fins.close();
-                            // } else {
-                            //     System.err.println("No se puede localizar el fichero");
-                            // }
+                                    logWriter(accionLogPath, "Ejecución PUT finalizada");
 
-                                break;
-                            case "SALIR":
-                                paramsclissl[0] += " ";
-                                output.write(paramsclissl[0].getBytes());
-                                output.flush(); // no dejamos ningún byte restante
-                                input.read(alojar,0,__MAX_BUFFER);
-                                String[] salir = new String(alojar).split("/", 2);
-                                //? System.out.println("["+salir[0]+"] ["+salir[1]+"] ["+sk.getLocalPort()+"]");
-                                if((Integer.parseInt(salir[0].trim())) == sk.getLocalPort() && salir[1].trim().equals("EXIT")) {
-                                    // * log: Saliendo...
-                                    logWriter(accionLogPath, "Cliente finalizando conexxión con el servidor");
-                                    //SALIR_SSL = true;
-                                    input.close();
-                                    output.close();
-                                    sk.close();
-                                    System.exit(0);
+                                } catch (ArrayIndexOutOfBoundsException aioobe) {
+                                    System.err.println(aioobe.getMessage());
+
+                                    logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
+                                } catch (FileNotFoundException fnfe) {
+                                    System.err.println(fnfe.getMessage());
+
+                                    logWriter(errorLogPath, "ERROR Archivo no encontrado");
                                 }
-                                break;
-                        }
-                        //Finalizamos el programa tras realizarse una petición LIST, GET o PUT
-                        if(paramsclissl[0] != "SALIR "){
-                            System.out.println("Cliente desconectándose del servidor");
-                            input.close();
-                            output.close();
-                            sk.close();
-                            System.out.println("Cliente desconectado del servidor");
-                            System.exit(0);
-                        }
-                    //}
+                            }
+
+                            break;
+                        case "SALIR":
+                            logWriter(accionLogPath, "Seleccionado SALIR");
+                            paramsclissl[0] += " ";
+                            output.write(paramsclissl[0].getBytes());
+                            output.flush(); // no dejamos ningún byte restante
+                            input.read(alojar, 0, __MAX_BUFFER);
+                            String[] salir = new String(alojar).split("/", 2);
+                            // ? System.out.println("["+salir[0]+"] ["+salir[1]+"]
+                            // ["+sk.getLocalPort()+"]");
+                            if ((Integer.parseInt(salir[0].trim())) == sk.getLocalPort()
+                                    && salir[1].trim().equals("EXIT")) {
+                                // * log: Saliendo...
+                                logWriter(accionLogPath, "Cliente finalizando conexxión con el servidor");
+                                // SALIR_SSL = true;
+                                input.close();
+                                output.close();
+                                sk.close();
+                                System.exit(0);
+                            }
+                            break;
+                    }
+                    // Finalizamos el programa tras realizarse una petición LIST, GET o PUT
+                    if (paramsclissl[0] != "SALIR ") {
+                        System.out.println("Cliente desconectándose del servidor");
+                        input.close();
+                        output.close();
+                        sk.close();
+                        System.out.println("Cliente desconectado del servidor");
+                        System.exit(0);
+                    }
+                    // }
                     sn.close();
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());
-                    // ! log: error en la entrada/salida + ioe.printStackTrace();
-                    logWriter(errorLogPath, "ERROR E/S "+ioe.getMessage());
+
+                    logWriter(errorLogPath, "ERROR E/S " + ioe.getMessage());
                 } catch (NumberFormatException nfe) {
                     System.err.println(nfe.getMessage());
-                    // ! log: error con la petición introducida
+
                     logWriter(errorLogPath, "ERROR La petición introducida es incorrecta");
                 } catch (IndexOutOfBoundsException ioobe) {
                     System.err.println(ioobe.getMessage());
-                    // ! log: error de índice de un array. Probablemente en la escritura del archivo
+
                     logWriter(errorLogPath, "ERROR En el ínidce de un array durante la escritura");
                 }
             }
@@ -403,33 +408,30 @@ public class LFTClient {
             alojamiento[i] = Long.valueOf(cifras.charAt(i)).byteValue();
         // Para no tener que usar el buffer entero, agregamos un separador
         alojamiento[length] = (byte) '/';
-        // TODO probar con trim
         return alojamiento;
     }
 
-    public void logWriter(String logPath, String logMessage){
+    public void logWriter(String logPath, String logMessage) {
         Logger log = Logger.getLogger("Registro de Eventos");
         FileHandler fileH;
 
         try {
-            fileH = new FileHandler(logPath,true);
+            fileH = new FileHandler(logPath, true);
             log.addHandler(fileH);
 
             SimpleFormatter format = new SimpleFormatter();
             fileH.setFormatter(format);
 
-            if(logPath.equals(accionLogPath)){
+            if (logPath.equals(accionLogPath)) {
                 log.info(logMessage);
-            }else if(logPath.equals(errorLogPath)){
+            } else if (logPath.equals(errorLogPath)) {
                 log.warning(logMessage);
             }
 
         } catch (SecurityException e) {
             e.printStackTrace();
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 }
-
-// TODO: Implementar los logs de acciones y errores
