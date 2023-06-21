@@ -28,8 +28,8 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class LFTServer {
 
-    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
+    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
 
     // Esta variable de ruta varía según la distribucion del Sistema Operativo
     private String javaPath = "/home/raul/LFT_Certificados_RJC/"; // ruta a mis certificados
@@ -323,9 +323,10 @@ public class LFTServer {
                                         if (bytesLeidos != -1) {
                                             fous.write(buffer, 0, bytesLeidos);
                                             bytesLeidosTotales += bytesLeidos;
-                                            // System.out.println(100 * bytesLeidosTotales / bytesEsperados + "%");
+                                            System.out.print("\r"+100 * bytesLeidosTotales / bytesEsperados + "%");
                                         }
                                     }
+                                    System.out.print("\n"); // Recolocamos cursor tras porcentaje de obtención
                                     fous.close();
                                     nuevo_arch_serv.renameTo(def);
                                     if (bytesLeidosTotales != bytesEsperados) {
@@ -348,6 +349,9 @@ public class LFTServer {
                             System.out.println(
                                     "El cliente ha sido desconectado del Servidor para dejar paso a otros clientes");
                             actualClients--;
+                            /* Cerramos los Streams para liberar recursos/restos del cliente finalizado */
+                            in.close();
+                            out.close();
                         }
                     }
                 }

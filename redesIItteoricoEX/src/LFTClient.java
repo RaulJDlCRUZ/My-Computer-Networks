@@ -30,8 +30,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
+    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
     private static final int __MAX_BUFFER = 1024;
 
     // Estas 2 variables de rutas varían según el computador y la distribucion del
@@ -283,9 +283,10 @@ public class LFTClient {
                                 if (bytesLeidos != -1) {
                                     fous.write(buffer, 0, bytesLeidos);
                                     bytesLeidosTotales += bytesLeidos;
-                                    System.out.println(100 * bytesLeidosTotales / bytesEsperados + "%");
+                                    System.out.print("\r"+100 * bytesLeidosTotales / bytesEsperados + "%");
                                 }
                             }
+                            System.out.print("\n"); //Recolocamos el cursor tras los print del porcentaje de obtención
                             fous.close();
 
                             if (bytesLeidosTotales != bytesEsperados) {

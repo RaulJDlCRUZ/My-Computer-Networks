@@ -1,2 +1,16 @@
 jun 21, 2023 3:01:36 A. M. LFTClient logWriter
 ADVERTENCIA: ERROR E/S Conexión rehusada
+jun 21, 2023 11:13:31 P. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Socket closed
+jun 21, 2023 11:13:48 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 21, 2023 11:13:48 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor
+jun 21, 2023 11:13:48 P. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Socket closed
+jun 21, 2023 11:14:04 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 21, 2023 11:14:05 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución GET en servidor
+jun 21, 2023 11:14:05 P. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Socket closed
