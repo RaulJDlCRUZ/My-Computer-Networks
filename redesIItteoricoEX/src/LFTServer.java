@@ -28,11 +28,12 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class LFTServer {
 
-    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
+    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
 
     // Esta variable de ruta varía según la distribucion del Sistema Operativo
-    private String javaPath = "/home/raul/LFT_Certificados_RJC/"; // ruta a mis certificados
+    // /home/pablozar12/LFT_Certificados_PBS/
+    private String javaPath = "/home/pablozar12/LFT_Certificados_PBS/"; // ruta a mis certificados /home/raul/LFT_Certificados_RJC/
 
     private static final int __MAX_BUFFER = 1024;
     private static boolean modoSSL = false;
@@ -106,7 +107,7 @@ public class LFTServer {
                 KeyManager[] keyManagers = kmf.getKeyManagers();
 
                 // 3. ACCESO AL ALMACEN DE CLAVES "ServerTrustedStore.jks" con password servpass
-                logWriter(accionLogPath, "Acceso al almade claves 'cacerts' con password changeit");
+                logWriter(accionLogPath, "Acceso al almacén de claves 'cacerts' con password changeit");
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath + "ServerTrustedStore.jks"), "servpass".toCharArray());
 

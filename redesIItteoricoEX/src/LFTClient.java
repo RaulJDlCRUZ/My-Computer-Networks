@@ -30,14 +30,15 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
+    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
     private static final int __MAX_BUFFER = 1024;
 
     // Estas 2 variables de rutas varían según el computador y la distribucion del
     // Sistema Operativo
-    private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
-    private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
+    // /home/pablozar12/LFT_Certificados_PBS/
+    private String javaPath = "/home/pablozar12/LFT_Certificados_PBS/cacerts"; // ruta a trusted store -> cacerts /home/raul/LFT_Certificados_RJC/cacerts
+    private String javaPathKeyStore = "/home/pablozar12/LFT_Certificados_PBS/clientKey.jks"; // ruta a keymanager del cliente /home/raul/LFT_Certificados_RJC/clientKey.jks
 
     private static boolean modoSSL = false;
     private static String host;
@@ -111,7 +112,7 @@ public class LFTClient {
                 KeyManager[] keyManagers = kmf.getKeyManagers();
 
                 // 3. ACCESO AL ALMACEN DE CLAVES "cacerts" con password changeit (Por defecto)
-                logWriter(accionLogPath, "Acceso al almade claves 'cacerts' con password changeit");
+                logWriter(accionLogPath, "Acceso al almacén de claves 'cacerts' con password changeit");
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath), "changeit".toCharArray());
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
