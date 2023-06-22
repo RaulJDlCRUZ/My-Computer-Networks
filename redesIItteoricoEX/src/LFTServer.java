@@ -195,7 +195,6 @@ public class LFTServer {
     // Manejador de peticiones del servidor
     public class Handler extends Thread {
         int bytesLeidos;
-        byte[] buffer = new byte[__MAX_BUFFER];
         final Socket clienteSocket;
 
         /* Constructor del manejador o hilo */
@@ -208,151 +207,148 @@ public class LFTServer {
             try {
                 in = clienteSocket.getInputStream();
                 out = clienteSocket.getOutputStream();
+                byte[] buffer = new byte[__MAX_BUFFER];
                 /* Onjetos de Entrada/Salida para comunicarse con el Cliente */
-                while (actualClients <= maximumClients) {
-                    int bytesLeidos = in.read(buffer, 0, buffer.length);
-                    if (bytesLeidos != -1) {
-                        String peticion_cli = new String(buffer);
-                        if (peticion_cli != null) {
-                            String[] argum_clients = peticion_cli.split(" ", 2);
-                            System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
-                                    + "], Parametro:<" + argum_clients[1] + ">");
+                int bytesLeidos = in.read(buffer, 0, buffer.length);
+                if (bytesLeidos != -1) {
+                    String peticion_cli = new String(buffer);
+                    if (peticion_cli != null) {
+                        String[] argum_clients = peticion_cli.split(" ", 2);
+                        System.out.println("Resultado de la petición:\nComando:[" + argum_clients[0]
+                                + "], Parametro:<" + argum_clients[1] + ">");
 
-                            /* Desde aquí ya puedo gestionar las peticiones */
-                            byte[] alojar = new byte[__MAX_BUFFER];
-                            bytesLeidos = 0;
-                            int bytesEsperados, bytesLeidosTotales = 0;
-                            String[] cadena;
-                            String enviar = "";
-                            switch (argum_clients[0].trim()) {
-                                case "LIST":
-
-                                    logWriter(accionLogPath, "Recibida Petición LIST");
-                                    File fichero = new File(carpetaServidor);
-                                    if (fichero.exists()) {// se comprueba si existe el el directorio
-                                        File[] arrayFicheros = fichero.listFiles();
-                                        for (int i = 0; i < arrayFicheros.length; i++) {
-                                            enviar += i + 1 + " : " + arrayFicheros[i].getName() + " ("
-                                                    + arrayFicheros[i].length() + ")" + "\n";
-                                        }
+                        /* Desde aquí ya puedo gestionar las peticiones */
+                        bytesLeidos = 0;
+                        int bytesEsperados, bytesLeidosTotales = 0;
+                        String[] cadena;
+                        String enviar = "";
+                        switch (argum_clients[0].trim()) {
+                            case "LIST":
+                                logWriter(accionLogPath, "Recibida Petición LIST");
+                                File fichero = new File(carpetaServidor);
+                                if (fichero.exists()) {// se comprueba si existe el el directorio
+                                    File[] arrayFicheros = fichero.listFiles();
+                                    for (int i = 0; i < arrayFicheros.length; i++) {
+                                        enviar += i + 1 + " : " + arrayFicheros[i].getName() + " ("
+                                                + arrayFicheros[i].length() + ")" + "\n";
                                     }
-                                    int bytesAlojar = enviar.length();
-                                    /* Calculamos cuánto debe alojar el cliente exactamente */
-                                    byte[] espacio = solicitudAlojamiento(bytesAlojar);
+                                }
+                                int bytesAlojar = enviar.length();
+                                /* Calculamos cuánto debe alojar el cliente exactamente */
+                                byte[] espacio = solicitudAlojamiento(bytesAlojar);
 
-                                    /* Servidor envia el espacio a utilizar */
-                                    out.write(espacio, 0, espacio.length);
-                                    out.flush();
-                                    /* Enviamos el listado de archivos como tal */
-                                    out.write(enviar.getBytes());
-                                    out.flush();
+                                /* Servidor envia el espacio a utilizar */
+                                out.write(espacio, 0, espacio.length);
+                                out.flush();
+                                /* Enviamos el listado de archivos como tal */
+                                out.write(enviar.getBytes());
+                                out.flush();
 
-                                    logWriter(accionLogPath, "Fin ejecución LIST en servidor");
-                                    break;
-                                case "GET":
-                                    if (argum_clients[1].trim().equals("")) {
-                                        // Esto no es coherente
-                                    } else {
+                                logWriter(accionLogPath, "Fin ejecución LIST en servidor");
+                                break;
+                            case "GET":
+                                if (argum_clients[1].trim().equals("")) {
+                                    // Esto no es coherente
+                                } else {
+                                    logWriter(accionLogPath, "Recibida Petición GET");
 
-                                        logWriter(accionLogPath, "Recibida Petición GET");
-                                        try {
-                                            /*
-                                             * Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco
-                                             */
-                                            String ruta = carpetaServidor + "/" + argum_clients[1].trim();
-
-                                            File peticion = new File(ruta);
-                                            if (peticion.exists()) {
-                                                /* Calculamos cuanto espacio necesita el cliente */
-                                                long tamanyo = peticion.length();
-                                                // ? System.out.println(tamanyo);
-                                                alojar = solicitudAlojamiento(tamanyo);
-                                                out.write(alojar);
+                                    try {
+                                        /*
+                                         * Creamos la ruta absoluta del archivo solicitado, sin espacios en blanco
+                                         */
+                                        String ruta = carpetaServidor + "/" + argum_clients[1].trim();
+                                        byte[] remitir = new byte[__MAX_BUFFER];
+                                        File peticion = new File(ruta);
+                                        if (peticion.exists()) {
+                                            /* Calculamos cuanto espacio necesita el cliente */
+                                            long tamanyo = peticion.length();
+                                            remitir = solicitudAlojamiento(tamanyo);
+                                            out.write(remitir);
+                                            out.flush();
+                                            /* Enviamos los bytes del archivo */
+                                            int bytesArchivoLeidos;
+                                            FileInputStream fins = new FileInputStream(peticion);
+                                            byte leerget[] = new byte[__MAX_BUFFER];
+                                            while ((bytesArchivoLeidos = fins.read(leerget)) != -1) {
+                                                out.write(leerget, 0, bytesArchivoLeidos);
                                                 out.flush();
-                                                /* Enviamos los bytes del archivo */
-                                                int bytesArchivoLeidos;
-                                                FileInputStream fins = new FileInputStream(peticion);
-                                                byte buffer2[] = new byte[__MAX_BUFFER];
-                                                while ((bytesArchivoLeidos = fins.read(buffer2)) != -1) {
-                                                    out.write(buffer2, 0, bytesArchivoLeidos);
-                                                    out.flush();
-                                                }
-                                                fins.close();
-                                            } else {
-                                                System.err.println("No se puede localizar el fichero");
                                             }
-
-                                            logWriter(accionLogPath, "Fin ejecución GET en servidor");
-                                        } catch (ArrayIndexOutOfBoundsException aioobe) {
-                                            System.err.println(aioobe.getMessage());
-
-                                            logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
-                                        } catch (FileNotFoundException fnfe) {
-                                            System.err.println(fnfe.getMessage());
-
-                                            logWriter(errorLogPath, "ERROR Archivo no encontrado");
+                                            fins.close();
+                                        } else {
+                                            System.err.println("No se puede localizar el fichero");
                                         }
+
+                                        logWriter(accionLogPath, "Fin ejecución GET en servidor");
+                                    } catch (ArrayIndexOutOfBoundsException aioobe) {
+                                        System.err.println(aioobe.getMessage());
+
+                                        logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
+                                    } catch (FileNotFoundException fnfe) {
+                                        System.err.println(fnfe.getMessage());
+
+                                        logWriter(errorLogPath, "ERROR Archivo no encontrado");
                                     }
-                                    break;
-                                case "PUT":
+                                }
+                                break;
+                            case "PUT":
 
-                                    logWriter(accionLogPath, "Recibida Petición PUT");
+                                logWriter(accionLogPath, "Recibida Petición PUT");
+                                byte[] tomar = new byte[__MAX_BUFFER];
+                                // Recojemos el tamaño del archivo a alojar
+                                in.read(tomar, 0, __MAX_BUFFER);
+                                cadena = new String(tomar).split("/", 2);
+                                bytesEsperados = Integer.parseInt(cadena[0]);
 
-                                    // Recojemos el tamaño del archivo a alojar
-                                    in.read(alojar, 0, __MAX_BUFFER);
-                                    cadena = new String(alojar).split("/", 2);
-                                    bytesEsperados = Integer.parseInt(cadena[0]);
+                                System.out.println(
+                                        "Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
 
-                                    System.out.println(
-                                            "Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
+                                String ruta = carpetaServidor + "/" + argum_clients[1].trim();
+                                System.out.println("Escribiendo " + ruta + "...");
+                                File nuevo_arch_serv = new File(carpetaServidor + "/" + "archivo");
+                                File def = new File(ruta);
+                                FileOutputStream fous = new FileOutputStream(nuevo_arch_serv);
 
-                                    String ruta = carpetaServidor + "/" + argum_clients[1].trim();
-                                    System.out.println("Escribiendo " + ruta + "...");
-                                    File nuevo_arch_serv = new File(carpetaServidor + "/" + "archivo");
-                                    File def = new File(ruta);
-                                    FileOutputStream fous = new FileOutputStream(nuevo_arch_serv);
+                                /* Como cliente escribió tres veces, reciclamos lo que quedaba del Stream */
+                                fous.write(cadena[1].trim().getBytes());
+                                bytesLeidosTotales += cadena[1].trim().length();
 
-                                    /* Como cliente escribió tres veces, reciclamos lo que quedaba del Stream */
-                                    fous.write(cadena[1].trim().getBytes());
-                                    bytesLeidosTotales += cadena[1].trim().length();
+                                byte[] leerput = new byte[__MAX_BUFFER];
 
-                                    byte[] buffer = new byte[__MAX_BUFFER];
-
-                                    while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
-                                        bytesLeidos = in.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
-                                        if (bytesLeidos != -1) {
-                                            fous.write(buffer, 0, bytesLeidos);
-                                            bytesLeidosTotales += bytesLeidos;
-                                            System.out.print("\r"+100 * bytesLeidosTotales / bytesEsperados + "%");
-                                        }
+                                while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
+                                    bytesLeidos = in.read(leerput, 0, Math.min(__MAX_BUFFER, bytesEsperados));
+                                    if (bytesLeidos != -1) {
+                                        fous.write(leerput, 0, bytesLeidos);
+                                        bytesLeidosTotales += bytesLeidos;
+                                        System.out.print("\r" + 100 * bytesLeidosTotales / bytesEsperados + "%");
                                     }
-                                    System.out.print("\n"); // Recolocamos cursor tras porcentaje de obtención
-                                    fous.close();
-                                    nuevo_arch_serv.renameTo(def);
-                                    if (bytesLeidosTotales != bytesEsperados) {
-                                        System.err.println("Comunicación rota.");
-                                    }
+                                }
+                                System.out.print("\n"); // Recolocamos cursor tras porcentaje de obtención
+                                fous.close();
+                                nuevo_arch_serv.renameTo(def);
+                                if (bytesLeidosTotales != bytesEsperados) {
+                                    System.err.println("Comunicación rota.");
+                                }
 
-                                    logWriter(accionLogPath, "Fin ejecución PUT en servidor");
-                                    break;
-                                case "SALIR":
+                                logWriter(accionLogPath, "Fin ejecución PUT en servidor");
+                                break;
+                            case "SALIR":
 
-                                    logWriter(accionLogPath, "Recibida Petición SALIR");
-                                    System.out.println(clientSocket.getPort() + " quiere salir");
-                                    String exit = clientSocket.getPort() + "/EXIT";
-                                    out.write(exit.getBytes());
-                                    out.flush();
+                                logWriter(accionLogPath, "Recibida Petición SALIR");
+                                System.out.println(clientSocket.getPort() + " quiere salir");
+                                String exit = clientSocket.getPort() + "/EXIT";
+                                out.write(exit.getBytes());
+                                out.flush();
 
-                                    logWriter(accionLogPath, "Fin ejecución SALIR en servidor");
-                                    break;
-                            }
-                            System.out.println(
-                                    "El cliente ha sido desconectado del Servidor para dejar paso a otros clientes");
-                            actualClients--;
-                            /* Cerramos los Streams para liberar recursos/restos del cliente finalizado */
-                            in.close();
-                            out.close();
+                                logWriter(accionLogPath, "Fin ejecución SALIR en servidor");
+                                break;
                         }
+                        System.out.println(
+                                "El cliente ha sido desconectado del Servidor para dejar paso a otros clientes");
+                        actualClients--;
+                        /* Cerramos los Streams para liberar recursos/restos del cliente finalizado */
+                        out.flush();
+                        in.close();
+                        out.close();
                     }
                 }
             } catch (IOException ioe) {

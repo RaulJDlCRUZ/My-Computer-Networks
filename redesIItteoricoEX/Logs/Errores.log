@@ -14,3 +14,57 @@ jun 21, 2023 11:14:05 P. M. LFTServer logWriter
 INFORMACIÓN: Fin ejecución GET en servidor
 jun 21, 2023 11:14:05 P. M. LFTServer logWriter
 ADVERTENCIA: ERROR E/S: Socket closed
+jun 22, 2023 1:20:16 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Tubería rota
+jun 22, 2023 1:20:16 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection reset
+jun 22, 2023 1:20:48 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Remote host terminated the handshake
+jun 22, 2023 1:20:57 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 22, 2023 1:20:57 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Conexión reinicializada por la máquina remota
+jun 22, 2023 1:21:20 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 22, 2023 1:21:20 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor
+jun 22, 2023 1:22:59 A. M. LFTClient logWriter
+ADVERTENCIA: ERROR La petición introducida es incorrecta
+jun 22, 2023 1:23:14 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Unsupported or unrecognized SSL message
+jun 22, 2023 1:23:19 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Unsupported or unrecognized SSL message
+jun 22, 2023 1:24:49 A. M. LFTClient logWriter
+ADVERTENCIA: ERROR La petición introducida es incorrecta
+jun 22, 2023 1:25:00 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Socket closed
+jun 22, 2023 1:25:00 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection has closed: javax.net.ssl.SSLException: Socket closed
+jun 22, 2023 1:25:42 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 22, 2023 1:25:43 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución GET en servidor
+jun 22, 2023 1:29:30 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection reset
+jun 22, 2023 1:29:30 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection or inbound has closed
+jun 22, 2023 1:30:26 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Tubería rota
+jun 22, 2023 1:31:07 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 22, 2023 1:31:07 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor
+jun 22, 2023 1:31:20 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 22, 2023 1:31:20 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Tubería rota
+jun 22, 2023 1:31:20 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection reset
+jun 22, 2023 1:46:41 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection has closed: javax.net.ssl.SSLException: Socket closed
+jun 22, 2023 1:46:41 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Socket closed
+jun 22, 2023 1:46:59 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 22, 2023 1:47:02 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor
