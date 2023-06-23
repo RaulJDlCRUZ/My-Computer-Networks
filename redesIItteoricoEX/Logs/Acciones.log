@@ -562,3 +562,57 @@ jun 22, 2023 2:13:31 A. M. LFTServer logWriter
 INFORMACIÓN: Recibida Petición PUT
 jun 22, 2023 2:13:32 A. M. LFTServer logWriter
 INFORMACIÓN: Fin ejecución PUT en servidor
+jun 23, 2023 4:29:51 A. M. LFTServer logWriter
+INFORMACIÓN: Argumentos introducidos correctamente
+jun 23, 2023 4:29:51 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al al almacén de claves
+jun 23, 2023 4:29:52 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso a las claves del almacén
+jun 23, 2023 4:29:52 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al almacén de claves 'cacerts' con password changeit
+jun 23, 2023 4:29:52 A. M. LFTServer logWriter
+INFORMACIÓN: Obtencion de un SSLSocketFactory y un socket cliente
+jun 23, 2023 4:29:52 A. M. LFTServer logWriter
+INFORMACIÓN: Intercambio de certificados
+jun 23, 2023 4:30:04 A. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection reset
+jun 23, 2023 4:30:25 A. M. LFTServer logWriter
+INFORMACIÓN: Argumentos introducidos correctamente
+jun 23, 2023 4:30:25 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al al almacén de claves
+jun 23, 2023 4:30:25 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso a las claves del almacén
+jun 23, 2023 4:30:25 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al almacén de claves 'cacerts' con password changeit
+jun 23, 2023 4:30:25 A. M. LFTServer logWriter
+INFORMACIÓN: Obtencion de un SSLSocketFactory y un socket cliente
+jun 23, 2023 4:30:25 A. M. LFTServer logWriter
+INFORMACIÓN: Intercambio de certificados
+jun 23, 2023 4:30:31 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 23, 2023 4:30:31 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor
+jun 23, 2023 4:30:51 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 23, 2023 4:30:51 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución GET en servidor
+jun 23, 2023 4:31:06 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 23, 2023 4:31:06 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor
+jun 23, 2023 4:31:44 A. M. LFTServer logWriter
+INFORMACIÓN: Argumentos introducidos correctamente
+jun 23, 2023 4:31:44 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al al almacén de claves
+jun 23, 2023 4:31:44 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso a las claves del almacén
+jun 23, 2023 4:31:44 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al almacén de claves 'cacerts' con password changeit
+jun 23, 2023 4:31:44 A. M. LFTServer logWriter
+INFORMACIÓN: Obtencion de un SSLSocketFactory y un socket cliente
+jun 23, 2023 4:31:44 A. M. LFTServer logWriter
+INFORMACIÓN: Intercambio de certificados
+jun 23, 2023 4:31:49 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 23, 2023 4:31:49 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor

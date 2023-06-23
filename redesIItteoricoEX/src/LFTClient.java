@@ -30,15 +30,14 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
+    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
     private static final int __MAX_BUFFER = 1024;
 
     // Estas 2 variables de rutas varían según el computador y la distribucion del
     // Sistema Operativo
-    // /home/pablozar12/LFT_Certificados_PBS/
-    private String javaPath = "/home/pablozar12/LFT_Certificados_PBS/cacerts"; // ruta a trusted store -> cacerts /home/raul/LFT_Certificados_RJC/cacerts
-    private String javaPathKeyStore = "/home/pablozar12/LFT_Certificados_PBS/clientKey.jks"; // ruta a keymanager del cliente /home/raul/LFT_Certificados_RJC/clientKey.jks
+    private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
+    private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
 
     private static boolean modoSSL = false;
     private static String host;
@@ -112,7 +111,7 @@ public class LFTClient {
                 KeyManager[] keyManagers = kmf.getKeyManagers();
 
                 // 3. ACCESO AL ALMACEN DE CLAVES "cacerts" con password changeit (Por defecto)
-                logWriter(accionLogPath, "Acceso al almacén de claves 'cacerts' con password changeit");
+                logWriter(accionLogPath, "Acceso al almade claves 'cacerts' con password changeit");
                 KeyStore trustedStore = KeyStore.getInstance("JKS");
                 trustedStore.load(new FileInputStream(javaPath), "changeit".toCharArray());
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -217,7 +216,6 @@ public class LFTClient {
                     byte[] alojar = new byte[__MAX_BUFFER];
                     int bytesEsperados, bytesLeidos = 0, bytesLeidosTotales = 0;
                     String[] cadena;
-                    // while (!SALIR_SSL) {
                     menu();
                     String linea_teclado = sn.nextLine();
                     String[] paramsclissl = linea_teclado.split(" ", 2);
@@ -235,7 +233,6 @@ public class LFTClient {
 
                             // Segunda parte: recibir el listado
                             bytesEsperados = Integer.parseInt(cadena[0]);
-                            // ? System.out.println(bytesEsperados);
                             byte[] listado = new byte[bytesEsperados];
 
                             while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) { //
@@ -253,6 +250,11 @@ public class LFTClient {
                             }
 
                             logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
+                            // !
+                            input.close();
+                            output.close();
+                            sk.close();
+                            System.exit(0);
                             break;
                         case "GET":
 
@@ -295,6 +297,11 @@ public class LFTClient {
                             }
 
                             logWriter(accionLogPath, "Ejecución GET finalizada");
+                            // !
+                            input.close();
+                            output.close();
+                            sk.close();
+                            System.exit(0);
 
                             break;
                         case "PUT":
@@ -331,6 +338,11 @@ public class LFTClient {
                                     }
 
                                     logWriter(accionLogPath, "Ejecución PUT finalizada");
+                                    // !
+                                    input.close();
+                                    output.close();
+                                    sk.close();
+                                    System.exit(0);
 
                                 } catch (ArrayIndexOutOfBoundsException aioobe) {
                                     System.err.println(aioobe.getMessage());
@@ -351,13 +363,8 @@ public class LFTClient {
                             output.flush(); // no dejamos ningún byte restante
                             input.read(alojar, 0, __MAX_BUFFER);
                             String[] salir = new String(alojar).split("/", 2);
-                            // ? System.out.println("["+salir[0]+"] ["+salir[1]+"]
-                            // ["+sk.getLocalPort()+"]");
-                            if ((Integer.parseInt(salir[0].trim())) == sk.getLocalPort()
-                                    && salir[1].trim().equals("EXIT")) {
-                                // * log: Saliendo...
-                                logWriter(accionLogPath, "Cliente finalizando conexxión con el servidor");
-                                // SALIR_SSL = true;
+                            if ((Integer.parseInt(salir[0].trim())) == sk.getLocalPort() && salir[1].trim().equals("EXIT")) {
+                                logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
                                 input.close();
                                 output.close();
                                 sk.close();
@@ -365,16 +372,6 @@ public class LFTClient {
                             }
                             break;
                     }
-                    // Finalizamos el programa tras realizarse una petición LIST, GET o PUT
-                    if (paramsclissl[0] != "SALIR ") {
-                        System.out.println("Cliente desconectándose del servidor");
-                        input.close();
-                        output.close();
-                        sk.close();
-                        System.out.println("Cliente desconectado del servidor");
-                        System.exit(0);
-                    }
-                    // }
                     sn.close();
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());

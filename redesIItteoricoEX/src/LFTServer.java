@@ -28,12 +28,12 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class LFTServer {
 
-    private static String errorLogPath = "../Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "../Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log";
+    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log";
 
     // Esta variable de ruta varía según la distribucion del Sistema Operativo
     // /home/pablozar12/LFT_Certificados_PBS/
-    private String javaPath = "/home/pablozar12/LFT_Certificados_PBS/"; // ruta a mis certificados /home/raul/LFT_Certificados_RJC/
+    private String javaPath = "/home/raul/LFT_Certificados_RJC/"; // ruta a mis certificados /home/raul/LFT_Certificados_RJC/
 
     private static final int __MAX_BUFFER = 1024;
     private static boolean modoSSL = false;
@@ -115,7 +115,7 @@ public class LFTServer {
                 tmf.init(trustedStore);
                 TrustManager[] trustManagers = tmf.getTrustManagers();
 
-                // 4. Obtener un SSLSocketFactory y un socket cliente
+                // 4. Obtener un SSLSocketFactory y un Serversocket
                 logWriter(accionLogPath, "Obtencion de un SSLSocketFactory y un socket cliente");
                 try {
                     SSLContext sc = SSLContext.getInstance("SSL");
