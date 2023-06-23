@@ -257,56 +257,60 @@ public class LFTClient {
                             System.exit(0);
                             break;
                         case "GET":
+                            if (paramsclissl[1].trim().equals("")) {
+                                System.err.println("Uso de GET: GET <nombre_archivo>");
+                            } else {
+                                logWriter(accionLogPath, "Seleccionado GET");
 
-                            logWriter(accionLogPath, "Seleccionado GET");
+                                String obtener = paramsclissl[0] + " " + paramsclissl[1];
 
-                            String obtener = paramsclissl[0] + " " + paramsclissl[1];
+                                output.write(obtener.getBytes());
+                                output.flush();
 
-                            output.write(obtener.getBytes());
-                            output.flush();
+                                input.read(alojar, 0, __MAX_BUFFER);
+                                cadena = new String(alojar).split("/");
 
-                            input.read(alojar, 0, __MAX_BUFFER);
-                            cadena = new String(alojar).split("/");
+                                bytesEsperados = Integer.parseInt(cadena[0]);
+                                // puedo poner aquí si es -1 (por parte del servidor) no lo hago porque no
+                                // existe el archivo
+                                System.out.println(
+                                        "Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
 
-                            bytesEsperados = Integer.parseInt(cadena[0]);
-                            // puedo poner aquí si es -1 (por parte del servidor) no lo hago porque no
-                            // existe el archivo
-                            System.out.println(
-                                    "Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
+                                String ruta = carpetaCliente + "/" + paramsclissl[1].trim();
+                                System.out.println("Escribiendo " + ruta + "...");
+                                File nuevo_arch_cli = new File(ruta);
+                                /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
+                                FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
 
-                            String ruta = carpetaCliente + "/" + paramsclissl[1].trim();
-                            System.out.println("Escribiendo " + ruta + "...");
-                            File nuevo_arch_cli = new File(ruta);
-                            /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
-                            FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
-
-                            byte[] buffer = new byte[__MAX_BUFFER];
-                            while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
-                                bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
-                                if (bytesLeidos != -1) {
-                                    fous.write(buffer, 0, bytesLeidos);
-                                    bytesLeidosTotales += bytesLeidos;
-                                    System.out.print("\r"+100 * bytesLeidosTotales / bytesEsperados + "%");
+                                byte[] buffer = new byte[__MAX_BUFFER];
+                                while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
+                                    bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
+                                    if (bytesLeidos != -1) {
+                                        fous.write(buffer, 0, bytesLeidos);
+                                        bytesLeidosTotales += bytesLeidos;
+                                        System.out.print("\r" + 100 * bytesLeidosTotales / bytesEsperados + "%");
+                                    }
                                 }
-                            }
-                            System.out.print("\n"); //Recolocamos el cursor tras los print del porcentaje de obtención
-                            fous.close();
+                                System.out.print("\n"); // Recolocamos el cursor tras los print del porcentaje de
+                                                        // obtención
+                                fous.close();
 
-                            if (bytesLeidosTotales != bytesEsperados) {
-                                System.err.println("Comunicación rota.");
-                            }
+                                if (bytesLeidosTotales != bytesEsperados) {
+                                    System.err.println("Comunicación rota.");
+                                }
 
-                            logWriter(accionLogPath, "Ejecución GET finalizada");
-                            // !
-                            input.close();
-                            output.close();
-                            sk.close();
-                            System.exit(0);
+                                logWriter(accionLogPath, "Ejecución GET finalizada");
+                                // !
+                                input.close();
+                                output.close();
+                                sk.close();
+                                System.exit(0);
+                            }
 
                             break;
                         case "PUT":
                             if (paramsclissl[1].trim().equals("")) {
-                                // No es Coherente
+                                System.err.println("Uso de PUT: PUT <nombre_archivo>");
                             } else {
                                 try {
 
@@ -363,7 +367,8 @@ public class LFTClient {
                             output.flush(); // no dejamos ningún byte restante
                             input.read(alojar, 0, __MAX_BUFFER);
                             String[] salir = new String(alojar).split("/", 2);
-                            if ((Integer.parseInt(salir[0].trim())) == sk.getLocalPort() && salir[1].trim().equals("EXIT")) {
+                            if ((Integer.parseInt(salir[0].trim())) == sk.getLocalPort()
+                                    && salir[1].trim().equals("EXIT")) {
                                 logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
                                 input.close();
                                 output.close();
