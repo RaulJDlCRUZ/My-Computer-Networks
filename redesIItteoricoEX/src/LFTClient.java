@@ -250,7 +250,7 @@ public class LFTClient {
                             }
 
                             logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
-                            // !
+                            logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
                             input.close();
                             output.close();
                             sk.close();
@@ -300,7 +300,7 @@ public class LFTClient {
                                 }
 
                                 logWriter(accionLogPath, "Ejecución GET finalizada");
-                                // !
+                                logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
                                 input.close();
                                 output.close();
                                 sk.close();
@@ -342,7 +342,7 @@ public class LFTClient {
                                     }
 
                                     logWriter(accionLogPath, "Ejecución PUT finalizada");
-                                    // !
+                                    logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
                                     input.close();
                                     output.close();
                                     sk.close();
