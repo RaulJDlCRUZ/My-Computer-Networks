@@ -70,3 +70,11 @@ jun 22, 2023 1:47:02 A. M. LFTServer logWriter
 INFORMACIÓN: Fin ejecución PUT en servidor
 jun 23, 2023 4:30:04 A. M. LFTServer logWriter
 ADVERTENCIA: ERROR E/S: Connection reset
+jun 24, 2023 1:49:53 P. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection reset
+jun 24, 2023 1:50:26 P. M. LFTServer logWriter
+ADVERTENCIA: ERROR E/S: Connection reset
+jun 24, 2023 1:50:56 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 24, 2023 1:50:56 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor

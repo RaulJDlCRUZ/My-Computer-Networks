@@ -340,7 +340,7 @@ public class LFTClient {
                                         // !
                                         byte[] respuestaServidor = new byte[__MAX_BUFFER];
                                         input.read(respuestaServidor, 0, __MAX_BUFFER);
-                                        System.out.println("Respuesta servidor: "+new String(respuestaServidor));
+                                        System.out.println("Respuesta servidor: " + new String(respuestaServidor));
                                     } else {
                                         System.err.println("No se puede localizar el fichero");
                                     }
@@ -402,10 +402,11 @@ public class LFTClient {
 
     public void menu() {
         /* Listar las opciones de cliente, tanto ssl como no ssl */
-        System.out.println("LIST: Listar los ficheros almacenados en la carpeta del servidor" +
+        System.out.println("----------------------------------------------------------------------------------" +
+                "\nLIST: Listar los ficheros almacenados en la carpeta del servidor" +
                 "\nGET <archivo>: El servidor transferirá al cliente el fichero especificado" +
                 "\nPUT <archivo>: El cliente enviará al servidor el archivo introducido por teclado" +
-                "\nSALIR");
+                "\nSALIR\n----------------------------------------------------------------------------------");
     }
 
     public static byte[] solicitudAlojamiento(long cifra) {
