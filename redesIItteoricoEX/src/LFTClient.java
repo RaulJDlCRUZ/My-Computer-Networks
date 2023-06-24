@@ -337,6 +337,10 @@ public class LFTClient {
                                             output.flush();
                                         }
                                         fins.close();
+                                        // !
+                                        byte[] respuestaServidor = new byte[__MAX_BUFFER];
+                                        input.read(respuestaServidor, 0, __MAX_BUFFER);
+                                        System.out.println("Respuesta servidor: "+new String(respuestaServidor));
                                     } else {
                                         System.err.println("No se puede localizar el fichero");
                                     }
@@ -369,6 +373,7 @@ public class LFTClient {
                             String[] salir = new String(alojar).split("/", 2);
                             if ((Integer.parseInt(salir[0].trim())) == sk.getLocalPort()
                                     && salir[1].trim().equals("EXIT")) {
+                                // Desde el servidor se autoriza la finalización del cliente
                                 logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
                                 input.close();
                                 output.close();

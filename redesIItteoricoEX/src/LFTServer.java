@@ -301,6 +301,7 @@ public class LFTServer {
 
                                 String ruta = carpetaServidor + "/" + argum_clients[1].trim();
                                 System.out.println("Escribiendo " + ruta + "...");
+                                // Temporalmente se usa un archivo generico
                                 File nuevo_arch_serv = new File(carpetaServidor + "/" + "archivo");
                                 File def = new File(ruta);
                                 FileOutputStream fous = new FileOutputStream(nuevo_arch_serv);
@@ -321,11 +322,14 @@ public class LFTServer {
                                 }
                                 System.out.print("\n"); // Recolocamos cursor tras porcentaje de obtención
                                 fous.close();
-                                nuevo_arch_serv.renameTo(def);
+                                nuevo_arch_serv.renameTo(def); // Tras descargar el archivo en servidor, lo recombramos
+                                String respuesta;
                                 if (bytesLeidosTotales != bytesEsperados) {
-                                    System.err.println("Comunicación rota.");
+                                    respuesta = "Comunicación rota. ";
+                                } else {
+                                    respuesta = "Recibido OK. ";
                                 }
-
+                                out.write((respuesta+bytesLeidosTotales).getBytes());
                                 logWriter(accionLogPath, "Fin ejecución PUT en servidor");
                                 break;
                             case "SALIR":

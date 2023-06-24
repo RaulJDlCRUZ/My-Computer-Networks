@@ -616,3 +616,47 @@ jun 23, 2023 4:31:49 A. M. LFTServer logWriter
 INFORMACIÓN: Recibida Petición LIST
 jun 23, 2023 4:31:49 A. M. LFTServer logWriter
 INFORMACIÓN: Fin ejecución LIST en servidor
+jun 24, 2023 11:35:40 A. M. LFTServer logWriter
+INFORMACIÓN: Argumentos introducidos correctamente
+jun 24, 2023 11:35:40 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al al almacén de claves
+jun 24, 2023 11:35:41 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso a las claves del almacén
+jun 24, 2023 11:35:41 A. M. LFTServer logWriter
+INFORMACIÓN: Acceso al almacén de claves 'cacerts' con password changeit
+jun 24, 2023 11:35:41 A. M. LFTServer logWriter
+INFORMACIÓN: Obtencion de un SSLSocketFactory y un socket cliente
+jun 24, 2023 11:35:41 A. M. LFTServer logWriter
+INFORMACIÓN: Intercambio de certificados
+jun 24, 2023 11:35:47 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 24, 2023 11:35:47 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor
+jun 24, 2023 11:36:01 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 24, 2023 11:36:02 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución GET en servidor
+jun 24, 2023 11:36:50 A. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 24, 2023 11:36:50 A. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor
+jun 24, 2023 1:38:37 P. M. LFTServer logWriter
+INFORMACIÓN: Argumentos introducidos correctamente
+jun 24, 2023 1:38:37 P. M. LFTServer logWriter
+INFORMACIÓN: Acceso al al almacén de claves
+jun 24, 2023 1:38:38 P. M. LFTServer logWriter
+INFORMACIÓN: Acceso a las claves del almacén
+jun 24, 2023 1:38:38 P. M. LFTServer logWriter
+INFORMACIÓN: Acceso al almacén de claves 'cacerts' con password changeit
+jun 24, 2023 1:38:38 P. M. LFTServer logWriter
+INFORMACIÓN: Obtencion de un SSLSocketFactory y un socket cliente
+jun 24, 2023 1:38:38 P. M. LFTServer logWriter
+INFORMACIÓN: Intercambio de certificados
+jun 24, 2023 1:38:46 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 24, 2023 1:38:46 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor
+jun 24, 2023 1:39:11 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 24, 2023 1:39:11 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor
