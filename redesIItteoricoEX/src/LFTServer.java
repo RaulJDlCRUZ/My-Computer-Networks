@@ -322,7 +322,7 @@ public class LFTServer {
                                 }
                                 System.out.print("\n"); // Recolocamos cursor tras porcentaje de obtención
                                 fous.close();
-                                nuevo_arch_serv.renameTo(def); // Tras descargar el archivo en servidor, lo recombramos
+                                nuevo_arch_serv.renameTo(def); // Tras descargar el archivo en servidor, lo renombramos
                                 String respuesta;
                                 if (bytesLeidosTotales != bytesEsperados) {
                                     respuesta = "Comunicación rota. ";
