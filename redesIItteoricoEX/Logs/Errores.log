@@ -78,3 +78,11 @@ jun 24, 2023 1:50:56 P. M. LFTServer logWriter
 INFORMACIÓN: Recibida Petición PUT
 jun 24, 2023 1:50:56 P. M. LFTServer logWriter
 INFORMACIÓN: Fin ejecución PUT en servidor
+jun 25, 2023 4:38:40 P. M. LFTClient logWriter
+ADVERTENCIA: ERROR E/S Conexión rehusada
+jun 25, 2023 4:38:56 P. M. LFTClient logWriter
+ADVERTENCIA: ERROR La petición introducida es incorrecta
+jun 25, 2023 4:39:51 P. M. LFTServer logWriter
+ADVERTENCIA: ERROR Archivo no encontrado
+jun 25, 2023 4:39:51 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución GET en servidor

@@ -32,9 +32,7 @@ public class LFTServer {
     private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log";
 
     // Esta variable de ruta varía según la distribucion del Sistema Operativo
-    // /home/pablozar12/LFT_Certificados_PBS/
     private String javaPath = "/home/raul/LFT_Certificados_RJC/"; // ruta a mis certificados
-                                                                  // /home/raul/LFT_Certificados_RJC/
 
     private static final int __MAX_BUFFER = 1024;
     private static boolean modoSSL = false;
@@ -275,6 +273,8 @@ public class LFTServer {
                                         fins.close();
                                     } else {
                                         System.err.println("No se puede localizar el fichero");
+                                        logWriter(errorLogPath, "ERROR Archivo no encontrado");
+                                        out.write("-1/".getBytes());
                                     }
 
                                     logWriter(accionLogPath, "Fin ejecución GET en servidor");

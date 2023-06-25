@@ -30,12 +30,11 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log
-    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log"; /// home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log
+    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log";
+    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log";
     private static final int __MAX_BUFFER = 1024;
 
-    // Estas 2 variables de rutas varían según el computador y la distribucion del
-    // Sistema Operativo
+    // Estas 2 variables de rutas varían según el computador o S.O.
     private String javaPath = "/home/raul/LFT_Certificados_RJC/cacerts"; // ruta a trusted store -> cacerts
     private String javaPathKeyStore = "/home/raul/LFT_Certificados_RJC/clientKey.jks"; // ruta a keymanager del cliente
 
@@ -259,6 +258,7 @@ public class LFTClient {
                         case "GET":
                             if (paramsclissl[1].trim().equals("")) {
                                 System.err.println("Uso de GET: GET <nombre_archivo>");
+                                logWriter(errorLogPath, "ERROR GET solicitado incorrectamente");
                             } else {
                                 logWriter(accionLogPath, "Seleccionado GET");
 
@@ -271,32 +271,35 @@ public class LFTClient {
                                 cadena = new String(alojar).split("/");
 
                                 bytesEsperados = Integer.parseInt(cadena[0]);
-                                // puedo poner aquí si es -1 (por parte del servidor) no lo hago porque no
-                                // existe el archivo
-                                System.out.println(
-                                        "Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
-
-                                String ruta = carpetaCliente + "/" + paramsclissl[1].trim();
-                                System.out.println("Escribiendo " + ruta + "...");
-                                File nuevo_arch_cli = new File(ruta);
-                                /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
-                                FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
-
-                                byte[] buffer = new byte[__MAX_BUFFER];
-                                while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
-                                    bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
-                                    if (bytesLeidos != -1) {
-                                        fous.write(buffer, 0, bytesLeidos);
-                                        bytesLeidosTotales += bytesLeidos;
-                                        System.out.print("\r" + 100 * bytesLeidosTotales / bytesEsperados + "%");
+                                if (bytesEsperados == -1) { // Si el servidor envió -1 -> no existe el archivo
+                                    System.err.println("No existe el fichero en el servidor.");
+                                    logWriter(errorLogPath, "ERROR Archivo no encontrado en el servidor");
+                                } else {
+                                    System.out.println("Necesito en total " + bytesEsperados + " bytes para alojar el archivo.\n");
+    
+                                    String ruta = carpetaCliente + "/" + paramsclissl[1].trim();
+                                    System.out.println("Escribiendo " + ruta + "...");
+                                    File nuevo_arch_cli = new File(ruta);
+                                    /* Herramienta para escribir en el archivo, hereda de la clase outputstream */
+                                    FileOutputStream fous = new FileOutputStream(nuevo_arch_cli);
+    
+                                    byte[] buffer = new byte[__MAX_BUFFER];
+                                    while (bytesLeidosTotales < bytesEsperados && bytesLeidos != -1) {
+                                        bytesLeidos = input.read(buffer, 0, Math.min(__MAX_BUFFER, bytesEsperados));
+                                        if (bytesLeidos != -1) {
+                                            fous.write(buffer, 0, bytesLeidos);
+                                            bytesLeidosTotales += bytesLeidos;
+                                            System.out.print("\r" + 100 * bytesLeidosTotales / bytesEsperados + "%");
+                                        }
                                     }
-                                }
-                                System.out.print("\n"); // Recolocamos el cursor tras los print del porcentaje de
-                                                        // obtención
-                                fous.close();
-
-                                if (bytesLeidosTotales != bytesEsperados) {
-                                    System.err.println("Comunicación rota.");
+                                    // Recolocamos el cursor tras los print del porcentaje de obtención con \n
+                                    System.out.print("\n");
+                                    fous.close();
+    
+                                    if (bytesLeidosTotales != bytesEsperados) {
+                                        System.err.println("Comunicación rota.");
+                                        logWriter(errorLogPath, "ERROR Comunicacion rota durante el GET");
+                                    }
                                 }
 
                                 logWriter(accionLogPath, "Ejecución GET finalizada");
@@ -311,6 +314,7 @@ public class LFTClient {
                         case "PUT":
                             if (paramsclissl[1].trim().equals("")) {
                                 System.err.println("Uso de PUT: PUT <nombre_archivo>");
+                                logWriter(errorLogPath, "ERROR PUT solicitado incorrectamente");
                             } else {
                                 try {
 
@@ -343,6 +347,7 @@ public class LFTClient {
                                         System.out.println("Respuesta servidor: " + new String(respuestaServidor));
                                     } else {
                                         System.err.println("No se puede localizar el fichero");
+                                        logWriter(errorLogPath, "ERROR Archivo no encontrado en el servidor");
                                     }
 
                                     logWriter(accionLogPath, "Ejecución PUT finalizada");
@@ -355,7 +360,7 @@ public class LFTClient {
                                 } catch (ArrayIndexOutOfBoundsException aioobe) {
                                     System.err.println(aioobe.getMessage());
 
-                                    logWriter(errorLogPath, "ERROR Numero incorrecto de argumentos");
+                                    logWriter(errorLogPath, "ERROR Numero incorrecto de indice en array");
                                 } catch (FileNotFoundException fnfe) {
                                     System.err.println(fnfe.getMessage());
 
