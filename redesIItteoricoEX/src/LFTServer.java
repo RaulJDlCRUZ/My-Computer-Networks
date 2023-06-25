@@ -326,6 +326,7 @@ public class LFTServer {
                                 String respuesta;
                                 if (bytesLeidosTotales != bytesEsperados) {
                                     respuesta = "Comunicación rota. ";
+                                    logWriter(errorLogPath, "ERROR Comunicacion rota durante el PUT");
                                 } else {
                                     respuesta = "Recibido OK. ";
                                 }

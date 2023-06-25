@@ -246,6 +246,7 @@ public class LFTClient {
                                 System.out.println(new String(listado));
                             else {
                                 System.err.println("Comunicación rota!");
+                                logWriter(errorLogPath, "ERROR Comunicacion rota durante el LIST");
                             }
 
                             logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
