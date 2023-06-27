@@ -251,10 +251,6 @@ public class LFTClient {
 
                             logWriter(accionLogPath, "Ejecución de LIST finalizada correctamente");
                             logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
-                            input.close();
-                            output.close();
-                            sk.close();
-                            System.exit(0);
                             break;
                         case "GET":
                             if (paramsclissl[1].trim().equals("")) {
@@ -376,6 +372,7 @@ public class LFTClient {
                                 input.close();
                                 output.close();
                                 sk.close();
+                                sn.close();
                                 System.exit(0);
                             }
                             break;
