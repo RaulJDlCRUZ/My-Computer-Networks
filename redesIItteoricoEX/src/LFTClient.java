@@ -396,7 +396,7 @@ public class LFTClient {
                 } catch (IndexOutOfBoundsException ioobe) {
                     System.err.println(ioobe.getMessage());
 
-                    logWriter(errorLogPath, "ERROR En el ínidce de un array durante la escritura");
+                    logWriter(errorLogPath, "ERROR En el índice de un array durante la escritura");
                 }
             }
         }.start(); // Objeto anónimo
