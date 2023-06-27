@@ -305,10 +305,6 @@ public class LFTClient {
 
                                 logWriter(accionLogPath, "Ejecución GET finalizada");
                                 logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
-                                input.close();
-                                output.close();
-                                sk.close();
-                                System.exit(0);
                             }
 
                             break;
@@ -353,10 +349,6 @@ public class LFTClient {
 
                                     logWriter(accionLogPath, "Ejecución PUT finalizada");
                                     logWriter(accionLogPath, "Cliente finalizando conexión con el servidor");
-                                    input.close();
-                                    output.close();
-                                    sk.close();
-                                    System.exit(0);
 
                                 } catch (ArrayIndexOutOfBoundsException aioobe) {
                                     System.err.println(aioobe.getMessage());
@@ -387,7 +379,14 @@ public class LFTClient {
                                 System.exit(0);
                             }
                             break;
+                        default:
+                            System.err.println("El comando introducido no es una petición válida");
+                            logWriter(errorLogPath, "ERROR petición desconocida");
+                            break;
                     }
+                    input.close();
+                    output.close();
+                    sk.close();
                     sn.close();
                 } catch (IOException ioe) {
                     System.err.println(ioe.getMessage());

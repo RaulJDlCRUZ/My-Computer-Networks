@@ -778,3 +778,27 @@ jun 25, 2023 4:39:51 P. M. LFTServer logWriter
 ADVERTENCIA: ERROR Archivo no encontrado
 jun 25, 2023 4:39:51 P. M. LFTServer logWriter
 INFORMACIÓN: Fin ejecución GET en servidor
+jun 27, 2023 12:29:12 P. M. LFTServer logWriter
+INFORMACIÓN: Argumentos introducidos correctamente
+jun 27, 2023 12:29:12 P. M. LFTServer logWriter
+INFORMACIÓN: Acceso al al almacén de claves
+jun 27, 2023 12:29:13 P. M. LFTServer logWriter
+INFORMACIÓN: Acceso a las claves del almacén
+jun 27, 2023 12:29:13 P. M. LFTServer logWriter
+INFORMACIÓN: Acceso al almacén de claves 'cacerts' con password changeit
+jun 27, 2023 12:29:13 P. M. LFTServer logWriter
+INFORMACIÓN: Obtencion de un SSLSocketFactory y un socket cliente
+jun 27, 2023 12:29:13 P. M. LFTServer logWriter
+INFORMACIÓN: Intercambio de certificados
+jun 27, 2023 12:29:19 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición LIST
+jun 27, 2023 12:29:19 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución LIST en servidor
+jun 27, 2023 12:29:57 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición GET
+jun 27, 2023 12:29:57 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución GET en servidor
+jun 27, 2023 12:30:24 P. M. LFTServer logWriter
+INFORMACIÓN: Recibida Petición PUT
+jun 27, 2023 12:30:24 P. M. LFTServer logWriter
+INFORMACIÓN: Fin ejecución PUT en servidor
