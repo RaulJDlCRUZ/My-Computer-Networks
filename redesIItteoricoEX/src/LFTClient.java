@@ -30,8 +30,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class LFTClient {
-    private static String errorLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Errores.log";
-    private static String accionLogPath = "/home/raul/RC2-TT/TT_REDES2/redesIItteoricoEX/Logs/Acciones.log";
+    private static String errorLogPath = "../Logs/Errores.log";
+    private static String accionLogPath = "../Logs/Acciones.log";
     private static final int __MAX_BUFFER = 1024;
 
     // Estas 2 variables de rutas varían según el computador o S.O.
